@@ -35,10 +35,47 @@ class ReportState:
     query: str = ""                      # 原始查询
     status: str = "pending"              # 状态: pending, processing, completed, failed
     
-    # 输入数据
-    query_engine_report: str = ""        # QueryEngine报告
-    media_engine_report: str = ""        # MediaEngine报告  
-    insight_engine_report: str = ""      # InsightEngine报告
+    # 输入数据（新字段名）
+    compete_engine_report: str = ""      # 竞争分析报告
+    customer_engine_report: str = ""     # 用户分析报告  
+    market_engine_report: str = ""       # 市场分析报告
+    
+    def __post_init__(self):
+        """初始化后处理"""
+        if not self.task_id:
+            self.task_id = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.metadata.query = self.query
+    
+    @property
+    def query_engine_report(self) -> str:
+        """[已废弃] 兼容旧字段名，请使用 compete_engine_report"""
+        return self.compete_engine_report
+    
+    @query_engine_report.setter
+    def query_engine_report(self, value: str):
+        """[已废弃] 兼容旧字段名，请使用 compete_engine_report"""
+        self.compete_engine_report = value
+    
+    @property
+    def media_engine_report(self) -> str:
+        """[已废弃] 兼容旧字段名，请使用 customer_engine_report"""
+        return self.customer_engine_report
+    
+    @media_engine_report.setter
+    def media_engine_report(self, value: str):
+        """[已废弃] 兼容旧字段名，请使用 customer_engine_report"""
+        self.customer_engine_report = value
+    
+    @property
+    def insight_engine_report(self) -> str:
+        """[已废弃] 兼容旧字段名，请使用 market_engine_report"""
+        return self.market_engine_report
+    
+    @insight_engine_report.setter
+    def insight_engine_report(self, value: str):
+        """[已废弃] 兼容旧字段名，请使用 market_engine_report"""
+        self.market_engine_report = value
+    
     forum_logs: str = ""                 # 论坛日志
     
     # 处理结果
@@ -47,12 +84,6 @@ class ReportState:
     
     # 元数据
     metadata: ReportMetadata = field(default_factory=ReportMetadata)
-    
-    def __post_init__(self):
-        """初始化后处理"""
-        if not self.task_id:
-            self.task_id = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.metadata.query = self.query
     
     def mark_processing(self):
         """标记为处理中"""
@@ -125,6 +156,11 @@ class ReportState:
                 status=data.get("status", "pending"),
                 selected_template=data.get("selected_template", "")
             )
+            
+            # 加载报告内容（支持新旧字段名）
+            state.compete_engine_report = data.get("compete_engine_report", data.get("query_engine_report", ""))
+            state.customer_engine_report = data.get("customer_engine_report", data.get("media_engine_report", ""))
+            state.market_engine_report = data.get("market_engine_report", data.get("insight_engine_report", ""))
             
             # 设置元数据
             metadata_data = data.get("metadata", {})

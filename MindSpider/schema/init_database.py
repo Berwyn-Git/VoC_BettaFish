@@ -102,8 +102,11 @@ async def main() -> None:
     engine = create_async_engine(database_url, pool_pre_ping=True, pool_recycle=1800)
 
     # 由于 models_bigdata 和 models_sa 现在共享同一个 Base，所有表都在同一个 metadata 中
-    # 只需创建一次，SQLAlchemy 会自动处理表之间的依赖关系
+    # 先删除所有表（如果存在），然后重新创建，确保表结构是最新的
     async with engine.begin() as conn:
+        # 删除所有表（按依赖顺序，先删除有外键的表）
+        await conn.run_sync(Base.metadata.drop_all)
+        # 重新创建所有表
         await conn.run_sync(Base.metadata.create_all)
 
     # 保持原有视图创建和释放逻辑

@@ -18,6 +18,14 @@ import importlib
 from pathlib import Path
 from MindSpider.main import MindSpider
 
+# 跨平台兼容性导入
+try:
+    import select
+    SELECT_AVAILABLE = True
+except ImportError:
+    SELECT_AVAILABLE = False
+    logger.warning("select 模块不可用，将使用备用方法读取进程输出")
+
 # 导入ReportEngine
 try:
     from ReportEngine.flask_interface import report_bp, initialize_report_engine
@@ -57,6 +65,19 @@ CONFIG_KEYS = [
     'DB_PASSWORD',
     'DB_NAME',
     'DB_CHARSET',
+    'MARKET_ENGINE_API_KEY',  # 市场分析
+    'MARKET_ENGINE_BASE_URL',
+    'MARKET_ENGINE_MODEL_NAME',
+    'CUSTOMER_ENGINE_API_KEY',  # 用户分析
+    'CUSTOMER_ENGINE_BASE_URL',
+    'CUSTOMER_ENGINE_MODEL_NAME',
+    'COMPETE_ENGINE_API_KEY',  # 竞争分析
+    'COMPETE_ENGINE_BASE_URL',
+    'COMPETE_ENGINE_MODEL_NAME',
+    'EXPERT_ENGINE_API_KEY',  # ExpertEngine
+    'EXPERT_ENGINE_BASE_URL',
+    'EXPERT_ENGINE_MODEL_NAME',
+    # 兼容旧配置（向后兼容）
     'INSIGHT_ENGINE_API_KEY',
     'INSIGHT_ENGINE_BASE_URL',
     'INSIGHT_ENGINE_MODEL_NAME',
@@ -440,23 +461,23 @@ forum_monitor_thread.start()
 
 # 全局变量存储进程信息
 processes = {
-    'insight': {'process': None, 'port': 8501, 'status': 'stopped', 'output': [], 'log_file': None},
-    'media': {'process': None, 'port': 8502, 'status': 'stopped', 'output': [], 'log_file': None},
-    'query': {'process': None, 'port': 8503, 'status': 'stopped', 'output': [], 'log_file': None},
+    'market': {'process': None, 'port': 8501, 'status': 'stopped', 'output': [], 'log_file': None},  # 市场分析（原insight）
+    'customer': {'process': None, 'port': 8502, 'status': 'stopped', 'output': [], 'log_file': None},  # 用户分析（原media）
+    'compete': {'process': None, 'port': 8503, 'status': 'stopped', 'output': [], 'log_file': None},  # 竞争分析（原query）
     'forum': {'process': None, 'port': None, 'status': 'stopped', 'output': [], 'log_file': None}  # 启动后标记为 running
 }
 
 STREAMLIT_SCRIPTS = {
-    'insight': 'SingleEngineApp/insight_engine_streamlit_app.py',
-    'media': 'SingleEngineApp/media_engine_streamlit_app.py',
-    'query': 'SingleEngineApp/query_engine_streamlit_app.py'
+    'market': 'SingleEngineApp/market_engine_streamlit_app.py',  # 市场分析（原insight）
+    'customer': 'SingleEngineApp/customer_engine_streamlit_app.py',  # 用户分析（原media）
+    'compete': 'SingleEngineApp/compete_engine_streamlit_app.py'  # 竞争分析（原query）
 }
 
 # 输出队列
 output_queues = {
-    'insight': Queue(),
-    'media': Queue(),
-    'query': Queue(),
+    'market': Queue(),  # 市场分析（原insight）
+    'customer': Queue(),  # 用户分析（原media）
+    'compete': Queue(),  # 竞争分析（原query）
     'forum': Queue()
 }
 
@@ -489,57 +510,54 @@ def read_log_from_file(app_name, tail_lines=None):
         return []
 
 def read_process_output(process, app_name):
-    """读取进程输出并写入文件"""
-    import select
+    """读取进程输出并写入文件（修复GBK编码问题，跨平台兼容）"""
     import sys
     
     while True:
         try:
             if process.poll() is not None:
                 # 进程结束，读取剩余输出
-                remaining_output = process.stdout.read()
-                if remaining_output:
-                    lines = remaining_output.decode('utf-8', errors='replace').split('\n')
-                    for line in lines:
-                        line = line.strip()
-                        if line:
-                            timestamp = datetime.now().strftime('%H:%M:%S')
-                            formatted_line = f"[{timestamp}] {line}"
-                            write_log_to_file(app_name, formatted_line)
-                            socketio.emit('console_output', {
-                                'app': app_name,
-                                'line': formatted_line
-                            })
+                try:
+                    remaining_output = process.stdout.read()
+                    if remaining_output:
+                        # 尝试UTF-8解码，失败则使用GBK，再失败则使用errors='replace'
+                        try:
+                            lines = remaining_output.decode('utf-8', errors='replace').split('\n')
+                        except UnicodeDecodeError:
+                            try:
+                                lines = remaining_output.decode('gbk', errors='replace').split('\n')
+                            except UnicodeDecodeError:
+                                lines = remaining_output.decode('utf-8', errors='replace').split('\n')
+                        
+                        for line in lines:
+                            line = line.strip()
+                            if line:
+                                timestamp = datetime.now().strftime('%H:%M:%S')
+                                formatted_line = f"[{timestamp}] {line}"
+                                write_log_to_file(app_name, formatted_line)
+                                socketio.emit('console_output', {
+                                    'app': app_name,
+                                    'line': formatted_line
+                                })
+                except Exception as e:
+                    logger.warning(f"读取进程剩余输出失败: {e}")
                 break
             
             # 使用非阻塞读取
             if sys.platform == 'win32':
                 # Windows下使用不同的方法
-                output = process.stdout.readline()
-                if output:
-                    line = output.decode('utf-8', errors='replace').strip()
-                    if line:
-                        timestamp = datetime.now().strftime('%H:%M:%S')
-                        formatted_line = f"[{timestamp}] {line}"
-                        
-                        # 写入日志文件
-                        write_log_to_file(app_name, formatted_line)
-                        
-                        # 发送到前端
-                        socketio.emit('console_output', {
-                            'app': app_name,
-                            'line': formatted_line
-                        })
-                else:
-                    # 没有输出时短暂休眠
-                    time.sleep(0.1)
-            else:
-                # Unix系统使用select
-                ready, _, _ = select.select([process.stdout], [], [], 0.1)
-                if ready:
+                try:
                     output = process.stdout.readline()
                     if output:
-                        line = output.decode('utf-8', errors='replace').strip()
+                        # 尝试UTF-8解码，失败则使用GBK，再失败则使用errors='replace'
+                        try:
+                            line = output.decode('utf-8', errors='replace').strip()
+                        except UnicodeDecodeError:
+                            try:
+                                line = output.decode('gbk', errors='replace').strip()
+                            except UnicodeDecodeError:
+                                line = output.decode('utf-8', errors='replace').strip()
+                        
                         if line:
                             timestamp = datetime.now().strftime('%H:%M:%S')
                             formatted_line = f"[{timestamp}] {line}"
@@ -552,12 +570,170 @@ def read_process_output(process, app_name):
                                 'app': app_name,
                                 'line': formatted_line
                             })
+                    else:
+                        # 没有输出时短暂休眠
+                        time.sleep(0.1)
+                except Exception as e:
+                    logger.warning(f"读取进程输出失败: {e}")
+                    time.sleep(0.1)
+            else:
+                # Unix/Mac系统：优先使用select，如果不可用则使用readline
+                if SELECT_AVAILABLE:
+                    try:
+                        ready, _, _ = select.select([process.stdout], [], [], 0.1)
+                        if ready:
+                            output = process.stdout.readline()
+                            if output:
+                                # 尝试UTF-8解码
+                                try:
+                                    line = output.decode('utf-8', errors='replace').strip()
+                                except UnicodeDecodeError:
+                                    line = output.decode('utf-8', errors='replace').strip()
+                                if line:
+                                    timestamp = datetime.now().strftime('%H:%M:%S')
+                                    formatted_line = f"[{timestamp}] {line}"
+                                    
+                                    # 写入日志文件
+                                    write_log_to_file(app_name, formatted_line)
+                                    
+                                    # 发送到前端
+                                    socketio.emit('console_output', {
+                                        'app': app_name,
+                                        'line': formatted_line
+                                    })
+                    except (OSError, ValueError) as e:
+                        # select 在某些情况下可能失败，回退到 readline
+                        logger.debug(f"select 失败，使用备用方法: {e}")
+                        output = process.stdout.readline()
+                        if output:
+                            try:
+                                line = output.decode('utf-8', errors='replace').strip()
+                            except UnicodeDecodeError:
+                                line = output.decode('utf-8', errors='replace').strip()
+                            if line:
+                                timestamp = datetime.now().strftime('%H:%M:%S')
+                                formatted_line = f"[{timestamp}] {line}"
+                                write_log_to_file(app_name, formatted_line)
+                                socketio.emit('console_output', {
+                                    'app': app_name,
+                                    'line': formatted_line
+                                })
+                else:
+                    # select 不可用，使用 readline（可能阻塞）
+                    output = process.stdout.readline()
+                    if output:
+                        try:
+                            line = output.decode('utf-8', errors='replace').strip()
+                        except UnicodeDecodeError:
+                            line = output.decode('utf-8', errors='replace').strip()
+                        if line:
+                            timestamp = datetime.now().strftime('%H:%M:%S')
+                            formatted_line = f"[{timestamp}] {line}"
+                            write_log_to_file(app_name, formatted_line)
+                            socketio.emit('console_output', {
+                                'app': app_name,
+                                'line': formatted_line
+                            })
+                    else:
+                        # 没有输出时短暂休眠
+                        time.sleep(0.1)
                             
         except Exception as e:
             error_msg = f"Error reading output for {app_name}: {e}"
             logger.exception(error_msg)
             write_log_to_file(app_name, f"[{datetime.now().strftime('%H:%M:%S')}] {error_msg}")
             break
+
+def check_port_available(port: int) -> bool:
+    """检查端口是否可用"""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1)
+            result = s.connect_ex(('127.0.0.1', port))
+            return result != 0  # 0表示端口被占用
+    except Exception as e:
+        logger.warning(f"检查端口 {port} 失败: {e}")
+        return False
+
+def kill_process_on_port(port: int) -> bool:
+    """杀死占用指定端口的进程（Windows、Linux和Mac都支持）"""
+    import platform
+    import shutil
+    try:
+        if platform.system() == 'Windows':
+            # Windows: 使用netstat和taskkill
+            import subprocess
+            # 查找占用端口的进程
+            result = subprocess.run(
+                ['netstat', '-ano'],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='ignore'
+            )
+            pid = None
+            for line in result.stdout.split('\n'):
+                if f':{port}' in line and 'LISTENING' in line:
+                    parts = line.split()
+                    if len(parts) > 0:
+                        pid = parts[-1]
+                        break
+            
+            if pid:
+                # 杀死进程
+                subprocess.run(
+                    ['taskkill', '/F', '/PID', pid],
+                    capture_output=True,
+                    timeout=5
+                )
+                logger.info(f"已终止占用端口 {port} 的进程 (PID: {pid})")
+                time.sleep(1)  # 等待端口释放
+                return True
+        else:
+            # Linux/Mac: 使用lsof和kill
+            import subprocess
+            # 检查 lsof 命令是否可用
+            if not shutil.which('lsof'):
+                logger.warning("lsof 命令不可用，无法清理端口占用")
+                return False
+            
+            result = subprocess.run(
+                ['lsof', '-ti', f':{port}'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.stdout.strip():
+                pid = result.stdout.strip()
+                # 尝试优雅终止，如果失败则强制终止
+                try:
+                    subprocess.run(['kill', pid], timeout=3, check=False)
+                    time.sleep(0.5)
+                    # 检查进程是否还在运行
+                    check_result = subprocess.run(
+                        ['lsof', '-ti', f':{port}'],
+                        capture_output=True,
+                        timeout=2
+                    )
+                    if check_result.stdout.strip():
+                        # 进程仍在运行，强制终止
+                        subprocess.run(['kill', '-9', pid], timeout=3, check=False)
+                except Exception as kill_error:
+                    logger.warning(f"终止进程时出错: {kill_error}")
+                    # 尝试强制终止
+                    try:
+                        subprocess.run(['kill', '-9', pid], timeout=3, check=False)
+                    except Exception:
+                        pass
+                
+                logger.info(f"已终止占用端口 {port} 的进程 (PID: {pid})")
+                time.sleep(1)
+                return True
+        return False
+    except Exception as e:
+        logger.warning(f"清理端口 {port} 失败: {e}")
+        return False
 
 def start_streamlit_app(app_name, script_path, port):
     """启动Streamlit应用"""
@@ -568,6 +744,15 @@ def start_streamlit_app(app_name, script_path, port):
         # 检查文件是否存在
         if not os.path.exists(script_path):
             return False, f"文件不存在: {script_path}"
+        
+        # 检查并清理端口占用
+        if not check_port_available(port):
+            logger.warning(f"端口 {port} 被占用，尝试清理...")
+            if kill_process_on_port(port):
+                logger.info(f"端口 {port} 已清理")
+                time.sleep(1)  # 等待端口完全释放
+            else:
+                return False, f"端口 {port} 被占用且无法清理，请手动关闭占用该端口的程序"
         
         # 清空之前的日志文件
         log_file_path = LOG_DIR / f"{app_name}.log"
@@ -667,6 +852,10 @@ def _build_healthcheck_url(port):
 def check_app_status():
     """检查应用状态"""
     for app_name, info in processes.items():
+        # Forum Engine 特殊处理（没有端口）
+        if app_name == 'forum':
+            continue
+        
         if info['process'] is not None:
             if info['process'].poll() is None:
                 # 进程仍在运行，检查端口是否可访问
@@ -681,12 +870,25 @@ def check_app_status():
                     else:
                         info['status'] = 'starting'
                 except Exception as exc:
-                    logger.warning(f"{app_name} 健康检查失败: {exc}")
-                    info['status'] = 'starting'
+                    # 如果端口被占用但进程存在，可能是启动中
+                    if check_port_available(info['port']):
+                        # 端口未被占用，但进程存在，可能是启动失败
+                        info['status'] = 'starting'
+                    else:
+                        # 端口被占用，可能是启动中
+                        info['status'] = 'starting'
             else:
                 # 进程已结束
                 info['process'] = None
                 info['status'] = 'stopped'
+        else:
+            # 进程不存在，但检查端口是否被占用（可能是外部启动的）
+            if info.get('port'):
+                if not check_port_available(info['port']):
+                    # 端口被占用，可能是外部启动的，标记为running
+                    info['status'] = 'running'
+                else:
+                    info['status'] = 'stopped'
 
 def wait_for_app_startup(app_name, max_wait_time=90):
     """等待应用启动完成"""
@@ -710,9 +912,17 @@ def wait_for_app_startup(app_name, max_wait_time=90):
                 info['status'] = 'running'
                 return True, "启动成功"
         except Exception as exc:
-            logger.warning(f"{app_name} 健康检查失败: {exc}")
+            # 启动中，继续等待
+            pass
 
         time.sleep(1)
+    
+    # 超时后检查端口是否可用（可能启动成功但健康检查失败）
+    if not check_port_available(info['port']):
+        info['status'] = 'running'
+        return True, "启动成功（端口已占用）"
+    
+    return False, "启动超时"
 
     return False, "启动超时"
 
@@ -734,7 +944,22 @@ atexit.register(cleanup_processes)
 @app.route('/')
 def index():
     """主页"""
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        logger.exception(f"渲染模板失败: {str(e)}")
+        return f"<h1>服务器错误</h1><p>无法加载页面: {str(e)}</p>", 500
+
+@app.errorhandler(404)
+def not_found(error):
+    """404错误处理"""
+    return jsonify({'error': '页面未找到'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """500错误处理"""
+    logger.exception("服务器内部错误")
+    return jsonify({'error': '服务器内部错误'}), 500
 
 @app.route('/api/status')
 def get_status():
@@ -1045,14 +1270,27 @@ def handle_status_request():
 if __name__ == '__main__':
     # 从配置文件读取 HOST 和 PORT
     from config import settings
+    import sys
+    
     HOST = settings.HOST
     PORT = settings.PORT
     
-    logger.info("等待配置确认，系统将在前端指令后启动组件...")
+    # 检查是否启用自动重载模式（通过环境变量或命令行参数）
+    DEBUG_MODE = os.getenv('FLASK_DEBUG', 'False').lower() == 'true' or '--debug' in sys.argv
+    USE_RELOADER = os.getenv('FLASK_RELOAD', 'False').lower() == 'true' or '--reload' in sys.argv or DEBUG_MODE
+    
+    if DEBUG_MODE:
+        logger.info("=" * 60)
+        logger.info("Flask 应用运行在 DEBUG 模式（自动重载已启用）")
+        logger.info("=" * 60)
+        logger.warning("注意: DEBUG 模式仅适用于开发环境！")
+    else:
+        logger.info("等待配置确认，系统将在前端指令后启动组件...")
+    
     logger.info(f"Flask服务器已启动，访问地址: http://{HOST}:{PORT}")
     
     try:
-        socketio.run(app, host=HOST, port=PORT, debug=False)
+        socketio.run(app, host=HOST, port=PORT, debug=DEBUG_MODE, use_reloader=USE_RELOADER)
     except KeyboardInterrupt:
         logger.info("\n正在关闭应用...")
         cleanup_processes()

@@ -102,12 +102,8 @@ celerybeat.pid
 
 # ==== 环境和IDE ====
 # Environments
-.env
 .venv
-env/
 venv/
-ENV/
-env.bak/
 venv.bak/
 conda_env/
 pytorch_python11/
@@ -142,7 +138,8 @@ cython_debug/
 *.xml
 
 # Visual Studio Code
-.vscode/
+# .vscode/  # 注释掉，允许 .vscode 目录被跟踪（用于工作区设置）
+!.vscode/settings.json  # 明确包含 settings.json
 
 # macOS
 .DS_Store
@@ -301,6 +298,10 @@ MindSpider/config.py
 # API 密钥
 api_keys.txt
 credentials.json
+
+# 注意: .env 文件现在被包含在版本控制中
+# 使用 !.env 明确包含 .env 文件（即使有其他规则可能排除它）
+!.env
 
 # ==== 其他项目特定文件 ====
 # 词云生成的临时文件

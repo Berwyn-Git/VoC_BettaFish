@@ -54,7 +54,7 @@ Beyond just report quality, compared to similar products, we have 🚀 six major
 
 6. **Lightweight and Highly Extensible Framework**: Based on pure Python modular design, achieving lightweight, one-click deployment. Clear code structure allows developers to easily integrate custom models and business logic, enabling rapid platform expansion and deep customization.
 
-**Starting with public opinion, but not limited to public opinion**. The goal of "WeiYu" is to become a simple and universal data analysis engine that drives all business scenarios.
+**Starting with public opinion, but not limited to public opinion**. The goal of "BettaFish Librarian" (图书管理员) is to become a simple and universal data analysis engine that drives all business scenarios.
 
 > For example, you only need to simply modify the API parameters and prompts of the Agent toolset to transform it into a financial market analysis system.
 >
@@ -65,7 +65,7 @@ Beyond just report quality, compared to similar products, we have 🚀 six major
 <div align="center">
 <img src="static/image/system_schematic.png" alt="banner" width="800">
 
-Say goodbye to traditional data dashboards. In "WeiYu", everything starts with a simple question - you just need to ask your analysis needs like a conversation
+Say goodbye to traditional data dashboards. In "BettaFish Librarian" (图书管理员), everything starts with a simple question - you just need to ask your analysis needs like a conversation
 </div>
 
 ## 🪄 Sponsors
@@ -75,11 +75,11 @@ LLM Model API Sponsor: <a href="https://aihubmix.com/?aff=8Ds9" target="_blank">
 <details>
 <summary>Solomon Blog LionCC.ai; Programming Carpool codecodex.ai; Programming Computing Power VibeCodingAPI.ai: <span style="margin-left: 10px"><a href="https://codecodex.ai/" target="_blank"><img src="./static/image/logo_loincc.png" alt="666ghj%2FBettaFish | Trendshift" height="40"/></a></span></summary>
 
-1. Solomon Blog LionCC.ai has updated the "BettaFish WeiYu System - LionCC API Deployment Configuration Complete Guide" and is optimizing one-click deployment and cloud server invocation solutions.
-2. VibeCodingapi.ai Lion Computing Platform has adapted to all LLM models of "BettaFish WeiYu System", including Claude Code, OpenAI Codex, and Gemini CLI programming development computing power. The quota price is 1:1 (100 yuan equals 100 USD quota).
+1. Solomon Blog LionCC.ai has updated the "BettaFish Librarian System - LionCC API Deployment Configuration Complete Guide" and is optimizing one-click deployment and cloud server invocation solutions.
+2. VibeCodingapi.ai Lion Computing Platform has adapted to all LLM models of "BettaFish Librarian System", including Claude Code, OpenAI Codex, and Gemini CLI programming development computing power. The quota price is 1:1 (100 yuan equals 100 USD quota).
 3. Codecodex.ai Lion Programming Carpool System has achieved IP-free access to bypass Claude Code and OpenAI Codex restrictions. After following the official deployment tutorial, simply switch the BASE_URL invocation address and Token key invocation key to use the most powerful programming models.
 
-Solomon LionCC BettaFish WeiYu Benefits: Open codecodex.ai Lion Programming Channel, scan the QR code to join the WeChat community, register for VibeCodingapi.ai Lion Computing, and receive 20 USD API quota (limited to the first 1,000 users).
+Solomon LionCC BettaFish Librarian Benefits: Open codecodex.ai Lion Programming Channel, scan the QR code to join the WeChat community, register for VibeCodingapi.ai Lion Computing, and receive 20 USD API quota (limited to the first 1,000 users).
 </details>
 
 <details>

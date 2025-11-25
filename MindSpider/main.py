@@ -147,11 +147,22 @@ class MindSpider:
                 logger.error("错误：找不到数据库初始化脚本")
                 return False
             
+            # 设置环境变量确保UTF-8编码
+            env = os.environ.copy()
+            env.update({
+                'PYTHONIOENCODING': 'utf-8',
+                'PYTHONUTF8': '1',
+            })
+            
             result = subprocess.run(
                 [sys.executable, str(init_script)],
                 cwd=self.schema_path,
                 capture_output=True,
-                text=True
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                env=env,
+                timeout=300  # 5分钟超时
             )
             
             if result.returncode == 0:

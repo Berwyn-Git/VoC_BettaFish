@@ -1,0 +1,42 @@
+{
+  // Cursor/VS Code 工作区设置
+  // 明确告诉 IDE 不要排除 .env 文件
+  // 注意：VS Code/Cursor 默认会排除被 Git 忽略的文件
+  // 但由于我们在 .gitignore 中使用 !.env，Git 不会忽略它
+  // 如果 IDE 仍然显示 "File in globalignore"，可能是 IDE 的缓存问题
+  
+  // 强制显示 .env 文件（即使它被某些规则匹配）
+  "files.exclude": {
+    // 明确不排除 .env 文件
+    "**/.env": false,
+    ".env": false
+  },
+  
+  // 禁用 Git 的自动文件排除（这可能是问题的根源）
+  "files.useGitIgnore": false,
+  
+  // 搜索排除设置（不影响文件资源管理器的显示）
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/.git": true,
+    "**/venv": true,
+    "**/.venv": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/*.pyc": true
+    // 注意：这里不排除 .env，让它可以被搜索
+  },
+  
+  // 文件监视排除（不影响文件资源管理器的显示）
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/venv/**": true,
+    "**/.venv/**": true
+    // 注意：这里不排除 .env，让它可以被监视
+  }
+}
+

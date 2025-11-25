@@ -116,14 +116,23 @@ class ForumHost:
                 if speaker in ['SYSTEM', 'HOST']:
                     continue
                 
-                # 记录agent发言
-                if speaker in ['INSIGHT', 'MEDIA', 'QUERY']:
+                # 记录agent发言（支持新旧名称）
+                valid_speakers = ['MARKET', 'CUSTOMER', 'COMPETE', 'INSIGHT', 'MEDIA', 'QUERY']  # 新名称优先，兼容旧名称
+                if speaker in valid_speakers:
                     # 处理转义的换行符
                     content = content.replace('\\n', '\n')
                     
+                    # 将旧名称映射到新名称（用于统一显示）
+                    speaker_mapping = {
+                        'INSIGHT': 'MARKET',
+                        'MEDIA': 'CUSTOMER',
+                        'QUERY': 'COMPETE'
+                    }
+                    display_speaker = speaker_mapping.get(speaker, speaker)
+                    
                     parsed['agent_speeches'].append({
                         'timestamp': timestamp,
-                        'speaker': speaker,
+                        'speaker': display_speaker,  # 使用新名称显示
                         'content': content
                     })
         
@@ -144,9 +153,9 @@ class ForumHost:
 6. **推进分析**：提出新的分析角度或需要关注的问题，引导后续讨论方向
 
 **Agent介绍**：
-- **INSIGHT Agent**：专注于私有舆情数据库的深度挖掘和分析，提供历史数据和模式对比
-- **MEDIA Agent**：擅长多模态内容分析，关注媒体报道、图片、视频等视觉信息的传播效果
-- **QUERY Agent**：负责精准信息搜索，提供最新的网络信息和实时动态
+- **MARKET Agent（市场分析）**：专注于私有舆情数据库的深度挖掘和分析，提供历史数据和模式对比（原INSIGHT Agent）
+- **CUSTOMER Agent（用户分析）**：擅长多模态内容分析，关注媒体报道、图片、视频等视觉信息的传播效果（原MEDIA Agent）
+- **COMPETE Agent（竞争分析）**：负责精准信息搜索，提供最新的网络信息和实时动态（原QUERY Agent）
 
 **发言要求**：
 1. **综合性**：每次发言控制在1000字以内，内容应包括事件梳理、观点整合、问题引导等多个方面

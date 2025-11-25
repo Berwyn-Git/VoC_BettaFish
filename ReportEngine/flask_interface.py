@@ -85,9 +85,9 @@ class ReportTask:
 def check_engines_ready() -> Dict[str, Any]:
     """检查三个子引擎是否都有新文件"""
     directories = {
-        'insight': 'insight_engine_streamlit_reports',
-        'media': 'media_engine_streamlit_reports',
-        'query': 'query_engine_streamlit_reports'
+        'market': 'market_engine_streamlit_reports',  # 市场分析
+        'customer': 'customer_engine_streamlit_reports',  # 用户分析
+        'compete': 'compete_engine_streamlit_reports'  # 竞争分析
     }
 
     forum_log_path = 'logs/forum.log'
@@ -99,9 +99,9 @@ def check_engines_ready() -> Dict[str, Any]:
         }
 
     return report_agent.check_input_files(
-        directories['insight'],
-        directories['media'],
-        directories['query'],
+        directories['market'],  # 市场分析（原insight）
+        directories['customer'],  # 用户分析（原media）
+        directories['compete'],  # 竞争分析（原query）
         forum_log_path
     )
 
@@ -202,6 +202,7 @@ def generate_report():
         data = request.get_json() or {}
         query = data.get('query', '智能舆情分析报告')
         custom_template = data.get('custom_template', '')
+        reset_baseline = data.get('reset_baseline', True)  # 默认重置基准，以便检测新文件
 
         # 清空日志文件
         clear_report_log()
@@ -212,6 +213,16 @@ def generate_report():
                 'success': False,
                 'error': 'Report Engine未初始化'
             }), 500
+
+        # 如果需要重置基准（开始新搜索时），重置基准以便检测新生成的文件
+        if reset_baseline:
+            directories = {
+                'market': 'market_engine_streamlit_reports',
+                'customer': 'customer_engine_streamlit_reports',
+                'compete': 'compete_engine_streamlit_reports'
+            }
+            report_agent.file_baseline.reset_baseline(directories)
+            logger.info("已重置文件数量基准，准备检测新文件")
 
         # 检查输入文件是否准备就绪
         engines_status = check_engines_ready()

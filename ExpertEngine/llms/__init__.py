@@ -1,0 +1,8 @@
+"""
+ExpertEngine LLM模块
+"""
+
+from .base import LLMClient
+
+__all__ = ['LLMClient']
+

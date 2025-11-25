@@ -19,9 +19,9 @@ services:
       - ./logs:/app/logs
       - ./final_reports:/app/final_reports
       - ./.env:/app/.env  
-      - ./insight_engine_streamlit_reports:/app/insight_engine_streamlit_reports
-      - ./media_engine_streamlit_reports:/app/media_engine_streamlit_reports
-      - ./query_engine_streamlit_reports:/app/query_engine_streamlit_reports
+      - ./market_engine_streamlit_reports:/app/market_engine_streamlit_reports
+      - ./customer_engine_streamlit_reports:/app/customer_engine_streamlit_reports
+      - ./compete_engine_streamlit_reports:/app/compete_engine_streamlit_reports
 
   db:
     image: postgres:15

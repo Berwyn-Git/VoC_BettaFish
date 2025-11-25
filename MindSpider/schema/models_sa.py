@@ -31,15 +31,17 @@ class Base(DeclarativeBase):
 class DailyNews(Base):
     __tablename__ = "daily_news"
     __table_args__ = (
-        UniqueConstraint("news_id", name="uq_daily_news_id_unique"),  # 为外键引用添加唯一约束
-        UniqueConstraint("news_id", "source_platform", "crawl_date", name="uq_daily_news_unique"),
+        # 注意：由于 news_id 需要被外键引用，必须使用 unique=True（单列唯一约束）
+        # 因此不能使用复合唯一约束 (news_id, source_platform, crawl_date)
+        # 如果业务需要防止重复，应该在应用层处理
         Index("idx_daily_news_date", "crawl_date"),
         Index("idx_daily_news_platform", "source_platform"),
         Index("idx_daily_news_rank", "rank_position"),
+        Index("idx_daily_news_id_platform_date", "news_id", "source_platform", "crawl_date"),  # 复合索引用于查询优化
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    news_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    news_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)  # 为外键引用添加唯一约束
     source_platform: Mapped[str] = mapped_column(String(32), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     url: Mapped[Optional[str]] = mapped_column(String(512))
@@ -54,7 +56,6 @@ class DailyNews(Base):
 class DailyTopic(Base):
     __tablename__ = "daily_topics"
     __table_args__ = (
-        UniqueConstraint("topic_id", name="uq_daily_topics_id_unique"),  # 为外键引用添加唯一约束
         UniqueConstraint("topic_id", "extract_date", name="uq_daily_topics_unique"),
         Index("idx_daily_topics_date", "extract_date"),
         Index("idx_daily_topics_status", "processing_status"),
@@ -63,7 +64,7 @@ class DailyTopic(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    topic_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    topic_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)  # 为外键引用添加唯一约束
     topic_name: Mapped[str] = mapped_column(String(255), nullable=False)
     topic_description: Mapped[Optional[str]] = mapped_column(Text)
     keywords: Mapped[Optional[str]] = mapped_column(Text)

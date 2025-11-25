@@ -34,9 +34,9 @@ class HTMLGenerationNode(StateMutationNode):
         Args:
             input_data: 包含报告数据的字典
                 - query: 原始查询
-                - query_engine_report: QueryEngine报告内容
-                - media_engine_report: MediaEngine报告内容  
-                - insight_engine_report: InsightEngine报告内容
+                - compete_engine_report: 竞争分析报告内容
+                - customer_engine_report: 用户分析报告内容  
+                - market_engine_report: 市场分析报告内容
                 - forum_logs: 论坛日志内容
                 - selected_template: 选择的模板内容
                 
@@ -49,9 +49,9 @@ class HTMLGenerationNode(StateMutationNode):
             # 准备LLM输入数据
             llm_input = {
                 "query": input_data.get('query', ''),
-                "query_engine_report": input_data.get('query_engine_report', ''),
-                "media_engine_report": input_data.get('media_engine_report', ''),
-                "insight_engine_report": input_data.get('insight_engine_report', ''),
+                "compete_engine_report": input_data.get('compete_engine_report', ''),
+                "customer_engine_report": input_data.get('customer_engine_report', ''),
+                "market_engine_report": input_data.get('market_engine_report', ''),
                 "forum_logs": input_data.get('forum_logs', ''),
                 "selected_template": input_data.get('selected_template', '')
             }
@@ -144,9 +144,9 @@ class HTMLGenerationNode(StateMutationNode):
         logger.info("使用备用HTML生成方法")
         
         query = input_data.get('query', '智能舆情分析报告')
-        query_report = input_data.get('query_engine_report', '')
-        media_report = input_data.get('media_engine_report', '')
-        insight_report = input_data.get('insight_engine_report', '')
+        compete_report = input_data.get('compete_engine_report', '')
+        customer_report = input_data.get('customer_engine_report', '')
+        market_report = input_data.get('market_engine_report', '')
         forum_logs = input_data.get('forum_logs', '')
         
         generation_time = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
@@ -217,7 +217,7 @@ class HTMLGenerationNode(StateMutationNode):
         
         <div class="meta">
             <strong>报告生成时间:</strong> {generation_time}<br>
-            <strong>数据来源:</strong> QueryEngine、MediaEngine、InsightEngine、ForumEngine<br>
+            <strong>数据来源:</strong> 竞争分析、用户分析、市场分析、ForumEngine<br>
             <strong>报告类型:</strong> 综合舆情分析报告
         </div>
         
@@ -227,11 +227,11 @@ class HTMLGenerationNode(StateMutationNode):
             通过对查询主题"{query}"的深度分析，我们从多个维度展现了当前的舆情态势。
         </div>
         
-        {f'<h2>QueryEngine分析结果</h2><div class="section"><pre>{query_report}</pre></div>' if query_report else ''}
+        {f'<h2>竞争分析结果</h2><div class="section"><pre>{compete_report}</pre></div>' if compete_report else ''}
         
-        {f'<h2>MediaEngine分析结果</h2><div class="section"><pre>{media_report}</pre></div>' if media_report else ''}
+        {f'<h2>用户分析结果</h2><div class="section"><pre>{customer_report}</pre></div>' if customer_report else ''}
         
-        {f'<h2>InsightEngine分析结果</h2><div class="section"><pre>{insight_report}</pre></div>' if insight_report else ''}
+        {f'<h2>市场分析结果</h2><div class="section"><pre>{market_report}</pre></div>' if market_report else ''}
         
         {f'<h2>论坛监控数据</h2><div class="section"><pre>{forum_logs}</pre></div>' if forum_logs else ''}
         

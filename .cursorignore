@@ -1,0 +1,38 @@
+# Cursor IDE 忽略文件配置
+# 注意：此文件用于配置 Cursor IDE 的文件忽略规则
+# 如果需要让 Cursor 跟踪 .env 文件，请确保 .env 不在此列表中
+
+# 排除大型模型文件
+*.pth
+*.pt
+*.bin
+*.ckpt
+*.safetensors
+*.h5
+*.hdf5
+
+# 排除数据集文件
+*.csv
+*.json.gz
+*.jsonl
+*.parquet
+
+# 排除临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# 排除编译文件
+__pycache__/
+*.pyc
+*.pyo
+
+# 排除日志文件
+*.log
+
+# 注意：.env 文件现在被包含在版本控制中，所以不在这里排除
+# 如果需要排除，请取消下面的注释
+# .env
+

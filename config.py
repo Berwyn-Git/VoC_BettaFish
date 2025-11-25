@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-微舆配置文件
+图书管理员配置文件
 
 此模块使用 pydantic-settings 管理全局配置，支持从环境变量和 .env 文件自动加载。
 数据模型定义位置：
@@ -41,25 +41,41 @@ class Settings(BaseSettings):
     # ======================= LLM 相关 =======================
     # 我们的LLM模型API赞助商有：https://share.302.ai/P66Qe3、https://aihubmix.com/?aff=8Ds9，提供了非常全面的模型api
     
-    # Insight Agent（推荐Kimi，申请地址：https://platform.moonshot.cn/）
-    INSIGHT_ENGINE_API_KEY: Optional[str] = Field(None, description="Insight Agent（推荐 kimi-k2，官方申请地址：https://platform.moonshot.cn/）API 密钥，用于主 LLM。🚩请先按推荐配置申请并跑通，再根据需要调整 KEY、BASE_URL 与 MODEL_NAME。")
-    INSIGHT_ENGINE_BASE_URL: Optional[str] = Field("https://api.moonshot.cn/v1", description="Insight Agent LLM BaseUrl，可根据厂商自定义")
-    INSIGHT_ENGINE_MODEL_NAME: str = Field("kimi-k2-0711-preview", description="Insight Agent LLM 模型名称，例如 kimi-k2-0711-preview")
+    # Market Agent - 市场分析（推荐Kimi，申请地址：https://platform.moonshot.cn/）
+    MARKET_ENGINE_API_KEY: Optional[str] = Field(None, description="Market Agent - 市场分析（推荐 kimi-k2，官方申请地址：https://platform.moonshot.cn/）API 密钥，用于主 LLM。🚩请先按推荐配置申请并跑通，再根据需要调整 KEY、BASE_URL 与 MODEL_NAME。")
+    MARKET_ENGINE_BASE_URL: Optional[str] = Field("https://api.moonshot.cn/v1", description="Market Agent - 市场分析 LLM BaseUrl，可根据厂商自定义")
+    MARKET_ENGINE_MODEL_NAME: str = Field("kimi-k2-0711-preview", description="Market Agent - 市场分析 LLM 模型名称，例如 kimi-k2-0711-preview")
     
-    # Media Agent（推荐Gemini，推荐中转厂商：https://aihubmix.com/?aff=8Ds9）
-    MEDIA_ENGINE_API_KEY: Optional[str] = Field(None, description="Media Agent（推荐 gemini-2.5-pro，中转厂商申请地址：https://aihubmix.com/?aff=8Ds9）API 密钥")
-    MEDIA_ENGINE_BASE_URL: Optional[str] = Field("https://aihubmix.com/v1", description="Media Agent LLM BaseUrl，可根据中转服务调整")
-    MEDIA_ENGINE_MODEL_NAME: str = Field("gemini-2.5-pro", description="Media Agent LLM 模型名称，如 gemini-2.5-pro")
+    # Customer Agent - 用户分析（推荐Gemini，推荐中转厂商：https://aihubmix.com/?aff=8Ds9）
+    CUSTOMER_ENGINE_API_KEY: Optional[str] = Field(None, description="Customer Agent - 用户分析（推荐 gemini-2.5-pro，中转厂商申请地址：https://aihubmix.com/?aff=8Ds9）API 密钥")
+    CUSTOMER_ENGINE_BASE_URL: Optional[str] = Field("https://aihubmix.com/v1", description="Customer Agent - 用户分析 LLM BaseUrl，可根据中转服务调整")
+    CUSTOMER_ENGINE_MODEL_NAME: str = Field("gemini-2.5-pro", description="Customer Agent - 用户分析 LLM 模型名称，如 gemini-2.5-pro")
     
-    # Query Agent（推荐DeepSeek，申请地址：https://www.deepseek.com/）
-    QUERY_ENGINE_API_KEY: Optional[str] = Field(None, description="Query Agent（推荐 deepseek，官方申请地址：https://platform.deepseek.com/）API 密钥")
-    QUERY_ENGINE_BASE_URL: Optional[str] = Field("https://api.deepseek.com", description="Query Agent LLM BaseUrl")
-    QUERY_ENGINE_MODEL_NAME: str = Field("deepseek-chat", description="Query Agent LLM 模型名称，如 deepseek-reasoner")
+    # Compete Agent - 竞争分析（推荐DeepSeek，申请地址：https://www.deepseek.com/）
+    COMPETE_ENGINE_API_KEY: Optional[str] = Field(None, description="Compete Agent - 竞争分析（推荐 deepseek，官方申请地址：https://platform.deepseek.com/）API 密钥")
+    COMPETE_ENGINE_BASE_URL: Optional[str] = Field("https://api.deepseek.com", description="Compete Agent - 竞争分析 LLM BaseUrl")
+    COMPETE_ENGINE_MODEL_NAME: str = Field("deepseek-chat", description="Compete Agent - 竞争分析 LLM 模型名称，如 deepseek-reasoner")
+    
+    # 兼容旧配置（向后兼容）
+    INSIGHT_ENGINE_API_KEY: Optional[str] = Field(None, description="[已废弃] 请使用 MARKET_ENGINE_API_KEY")
+    INSIGHT_ENGINE_BASE_URL: Optional[str] = Field(None, description="[已废弃] 请使用 MARKET_ENGINE_BASE_URL")
+    INSIGHT_ENGINE_MODEL_NAME: Optional[str] = Field(None, description="[已废弃] 请使用 MARKET_ENGINE_MODEL_NAME")
+    MEDIA_ENGINE_API_KEY: Optional[str] = Field(None, description="[已废弃] 请使用 CUSTOMER_ENGINE_API_KEY")
+    MEDIA_ENGINE_BASE_URL: Optional[str] = Field(None, description="[已废弃] 请使用 CUSTOMER_ENGINE_BASE_URL")
+    MEDIA_ENGINE_MODEL_NAME: Optional[str] = Field(None, description="[已废弃] 请使用 CUSTOMER_ENGINE_MODEL_NAME")
+    QUERY_ENGINE_API_KEY: Optional[str] = Field(None, description="[已废弃] 请使用 COMPETE_ENGINE_API_KEY")
+    QUERY_ENGINE_BASE_URL: Optional[str] = Field(None, description="[已废弃] 请使用 COMPETE_ENGINE_BASE_URL")
+    QUERY_ENGINE_MODEL_NAME: Optional[str] = Field(None, description="[已废弃] 请使用 COMPETE_ENGINE_MODEL_NAME")
     
     # Report Agent（推荐Gemini，推荐中转厂商：https://aihubmix.com/?aff=8Ds9）
     REPORT_ENGINE_API_KEY: Optional[str] = Field(None, description="Report Agent（推荐 gemini-2.5-pro，中转厂商申请地址：https://aihubmix.com/?aff=8Ds9）API 密钥")
     REPORT_ENGINE_BASE_URL: Optional[str] = Field("https://aihubmix.com/v1", description="Report Agent LLM BaseUrl，可根据中转服务调整")
     REPORT_ENGINE_MODEL_NAME: str = Field("gemini-2.5-pro", description="Report Agent LLM 模型名称，如 gemini-2.5-pro")
+    
+    # Expert Agent（推荐Gemini，推荐中转厂商：https://aihubmix.com/?aff=8Ds9）
+    EXPERT_ENGINE_API_KEY: Optional[str] = Field(None, description="Expert Agent（推荐 gemini-2.5-pro，中转厂商申请地址：https://aihubmix.com/?aff=8Ds9）API 密钥，如果未配置则使用 REPORT_ENGINE_API_KEY")
+    EXPERT_ENGINE_BASE_URL: Optional[str] = Field(None, description="Expert Agent LLM BaseUrl，如果未配置则使用 REPORT_ENGINE_BASE_URL")
+    EXPERT_ENGINE_MODEL_NAME: Optional[str] = Field(None, description="Expert Agent LLM 模型名称，如果未配置则使用 REPORT_ENGINE_MODEL_NAME")
 
     # MindSpider Agent（推荐Deepseek，官方申请地址：https://platform.deepseek.com/）
     MINDSPIDER_API_KEY: Optional[str] = Field(None, description="MindSpider Agent（推荐 deepseek，官方申请地址：https://platform.deepseek.com/）API 密钥")
@@ -84,7 +100,7 @@ class Settings(BaseSettings):
     BOCHA_BASE_URL: Optional[str] = Field("https://api.bochaai.com/v1/ai-search", description="Bocha AI 搜索BaseUrl或博查网页搜索BaseUrl")
     BOCHA_WEB_SEARCH_API_KEY: Optional[str] = Field(None, description="Bocha API（申请地址：https://open.bochaai.com/）API密钥，用于Bocha搜索")
     
-    # ================== Insight Engine 搜索配置 ====================
+    # ================== Market Engine 搜索配置 ====================
     DEFAULT_SEARCH_HOT_CONTENT_LIMIT: int = Field(100, description="热榜内容默认最大数")
     DEFAULT_SEARCH_TOPIC_GLOBALLY_LIMIT_PER_TABLE: int = Field(50, description="按表全局话题最大数")
     DEFAULT_SEARCH_TOPIC_BY_DATE_LIMIT_PER_TABLE: int = Field(100, description="按日期话题最大数")

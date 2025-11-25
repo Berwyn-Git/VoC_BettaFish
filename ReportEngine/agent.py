@@ -17,6 +17,14 @@ from .nodes import (
 from .state import ReportState
 from .utils.config import settings, Settings
 
+# 导入ExpertEngine
+try:
+    from ExpertEngine import ExpertAgent
+    EXPERT_ENGINE_AVAILABLE = True
+except ImportError:
+    EXPERT_ENGINE_AVAILABLE = False
+    logger.warning("ExpertEngine未找到，将跳过专家批注步骤")
+
 
 class FileCountBaseline:
     """文件数量基准管理器"""
@@ -25,12 +33,28 @@ class FileCountBaseline:
         self.baseline_file = 'logs/report_baseline.json'
         self.baseline_data = self._load_baseline()
     
+    def reset_baseline(self, directories: Dict[str, str] = None):
+        """重置基准数据（用于开始新的搜索任务）"""
+        if directories:
+            self.initialize_baseline(directories)
+        else:
+            # 如果没有提供目录，清空基准数据
+            self.baseline_data = {}
+            self._save_baseline()
+            logger.info("基准数据已重置")
+    
     def _load_baseline(self) -> Dict[str, int]:
         """加载基准数据"""
         try:
             if os.path.exists(self.baseline_file):
                 with open(self.baseline_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    baseline = json.load(f)
+                    # 检查基准数据是否使用了旧的引擎名称，如果是则返回空字典以触发重新初始化
+                    old_names = ['insight', 'media', 'query']
+                    if any(old_name in baseline for old_name in old_names):
+                        logger.info("检测到基准文件使用旧引擎名称，将重新初始化")
+                        return {}
+                    return baseline
         except Exception as e:
             logger.exception(f"加载基准数据失败: {e}")
         return {}
@@ -134,6 +158,16 @@ class ReportAgent:
         # 初始化文件数量基准
         self._initialize_file_baseline()
         
+        # 初始化ExpertEngine（如果可用）
+        self.expert_agent = None
+        if EXPERT_ENGINE_AVAILABLE:
+            try:
+                # ExpertAgent 会从全局配置读取 EXPERT_ENGINE_* 配置，不需要传入 config
+                self.expert_agent = ExpertAgent()
+                logger.info("ExpertEngine已初始化")
+            except Exception as e:
+                logger.warning(f"ExpertEngine初始化失败: {str(e)}，将跳过专家批注步骤")
+        
         # 状态
         self.state = ReportState()
         
@@ -155,9 +189,9 @@ class ReportAgent:
     def _initialize_file_baseline(self):
         """初始化文件数量基准"""
         directories = {
-            'insight': 'insight_engine_streamlit_reports',
-            'media': 'media_engine_streamlit_reports',
-            'query': 'query_engine_streamlit_reports'
+            'market': 'market_engine_streamlit_reports',  # 市场分析
+            'customer': 'customer_engine_streamlit_reports',  # 用户分析
+            'compete': 'compete_engine_streamlit_reports'  # 竞争分析
         }
         self.file_baseline.initialize_baseline(directories)
     
@@ -184,7 +218,7 @@ class ReportAgent:
         
         Args:
             query: 原始查询
-            reports: 三个子agent的报告列表（按顺序：QueryEngine, MediaEngine, InsightEngine）
+            reports: 三个子agent的报告列表（按顺序：竞争分析, 用户分析, 市场分析）
             forum_logs: 论坛日志内容
             custom_template: 用户自定义模板（可选）
             save_report: 是否保存报告到文件
@@ -210,7 +244,21 @@ class ReportAgent:
             # Step 2: 直接生成HTML报告
             html_report = self._generate_html_report(query, reports, forum_logs, template_result)
             
-            # Step 3: 保存报告
+            # Step 3: ExpertEngine专家批注和修改（如果可用）
+            if self.expert_agent:
+                try:
+                    logger.info("开始ExpertEngine专家批注和修改...")
+                    expert_result = self.expert_agent.review_and_annotate(
+                        report_content=html_report,
+                        business_rules="",  # 业务逻辑先留空，后续补充了再应用
+                        save_result=save_report
+                    )
+                    html_report = expert_result.get('reviewed_content', html_report)
+                    logger.info("ExpertEngine专家批注和修改完成")
+                except Exception as e:
+                    logger.warning(f"ExpertEngine批注失败: {str(e)}，使用原始报告")
+            
+            # Step 4: 保存报告
             saved_files = {}
             if save_report:
                 saved_files = self._save_report(html_report)
@@ -275,21 +323,21 @@ class ReportAgent:
         """生成HTML报告"""
         logger.info("多轮生成HTML报告...")
         
-        # 准备报告内容，确保有3个报告
-        query_report = reports[0] if len(reports) > 0 else ""
-        media_report = reports[1] if len(reports) > 1 else ""
-        insight_report = reports[2] if len(reports) > 2 else ""
+        # 准备报告内容，确保有3个报告（按顺序：竞争分析、用户分析、市场分析）
+        compete_report = reports[0] if len(reports) > 0 else ""
+        customer_report = reports[1] if len(reports) > 1 else ""
+        market_report = reports[2] if len(reports) > 2 else ""
         
         # 转换为字符串格式
-        query_report = str(query_report) if query_report else ""
-        media_report = str(media_report) if media_report else ""
-        insight_report = str(insight_report) if insight_report else ""
+        compete_report = str(compete_report) if compete_report else ""
+        customer_report = str(customer_report) if customer_report else ""
+        market_report = str(market_report) if market_report else ""
         
         html_input = {
             'query': query,
-            'query_engine_report': query_report,
-            'media_engine_report': media_report,
-            'insight_engine_report': insight_report,
+            'compete_engine_report': compete_report,  # 竞争分析报告
+            'customer_engine_report': customer_report,  # 用户分析报告
+            'market_engine_report': market_report,  # 市场分析报告
             'forum_logs': forum_logs,
             'selected_template': template_result.get('template_content', '')
         }
@@ -402,14 +450,14 @@ class ReportAgent:
         self.state.save_to_file(filepath)
         logger.info(f"状态已保存到 {filepath}")
     
-    def check_input_files(self, insight_dir: str, media_dir: str, query_dir: str, forum_log_path: str) -> Dict[str, Any]:
+    def check_input_files(self, market_dir: str, customer_dir: str, compete_dir: str, forum_log_path: str) -> Dict[str, Any]:
         """
         检查输入文件是否准备就绪（基于文件数量增加）
         
         Args:
-            insight_dir: InsightEngine报告目录
-            media_dir: MediaEngine报告目录
-            query_dir: QueryEngine报告目录
+            market_dir: 市场分析报告目录
+            customer_dir: 用户分析报告目录
+            compete_dir: 竞争分析报告目录
             forum_log_path: 论坛日志文件路径
             
         Returns:
@@ -417,9 +465,9 @@ class ReportAgent:
         """
         # 检查各个报告目录的文件数量变化
         directories = {
-            'insight': insight_dir,
-            'media': media_dir,
-            'query': query_dir
+            'market': market_dir,  # 市场分析
+            'customer': customer_dir,  # 用户分析
+            'compete': compete_dir  # 竞争分析
         }
         
         # 使用文件基准管理器检查新文件
@@ -479,7 +527,7 @@ class ReportAgent:
         }
         
         # 加载报告文件
-        engines = ['query', 'media', 'insight']
+        engines = ['compete', 'customer', 'market']  # 竞争分析、用户分析、市场分析
         for engine in engines:
             if engine in file_paths:
                 try:

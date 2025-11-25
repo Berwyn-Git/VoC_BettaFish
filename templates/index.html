@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微舆</title>
+    <title>图书管理员</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
     <style>
         * {
@@ -808,14 +808,35 @@
         }
 
         /* 不同Engine的颜色区分 */
+        .forum-message.agent:has(.forum-message-header:contains("Compete Engine")) {
+            background-color: #eaf1f8;
+            border-color: #608ab1;
+        }
+
+        .forum-message.agent:has(.forum-message-header:contains("COMPETE Engine")) {
+            background-color: #eaf1f8;
+            border-color: #608ab1;
+        }
+
         .forum-message.agent:has(.forum-message-header:contains("Query Engine")) {
             background-color: #eaf1f8;
             border-color: #608ab1;
         }
 
-        .forum-message.agent:has(.forum-message-header:contains("QUERY Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("COMPETE Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("QUERY Engine")) {  /* 兼容旧名称 */
             background-color: #eaf1f8;
             border-color: #608ab1;
+        }
+
+        .forum-message.agent:has(.forum-message-header:contains("Market Engine")) {
+            background-color: #f2ebf3;
+            border-color: #8e6a9f;
+        }
+
+        .forum-message.agent:has(.forum-message-header:contains("MARKET Engine")) {
+            background-color: #f2ebf3;
+            border-color: #8e6a9f;
         }
 
         .forum-message.agent:has(.forum-message-header:contains("Insight Engine")) {
@@ -823,9 +844,20 @@
             border-color: #8e6a9f;
         }
 
-        .forum-message.agent:has(.forum-message-header:contains("INSIGHT Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("MARKET Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("INSIGHT Engine")) {  /* 兼容旧名称 */
             background-color: #f2ebf3;
             border-color: #8e6a9f;
+        }
+
+        .forum-message.agent:has(.forum-message-header:contains("Customer Engine")) {
+            background-color: #ebf2ea;
+            border-color: #6a9a6e;
+        }
+
+        .forum-message.agent:has(.forum-message-header:contains("CUSTOMER Engine")) {
+            background-color: #ebf2ea;
+            border-color: #6a9a6e;
         }
 
         .forum-message.agent:has(.forum-message-header:contains("Media Engine")) {
@@ -833,53 +865,63 @@
             border-color: #6a9a6e;
         }
 
-        .forum-message.agent:has(.forum-message-header:contains("MEDIA Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("CUSTOMER Engine")) {
+        .forum-message.agent:has(.forum-message-header:contains("MEDIA Engine")) {  /* 兼容旧名称 */
             background-color: #ebf2ea;
             border-color: #6a9a6e;
         }
 
         /* 备用方案：通过JavaScript添加的类 */
-        .forum-message.query-engine {
+        .forum-message.compete-engine,
+        .forum-message.query-engine {  /* 兼容旧类名 */
             background-color: #eaf1f8;
             border-color: #608ab1;
         }
 
-        .forum-message.insight-engine {
+        .forum-message.market-engine,
+        .forum-message.insight-engine {  /* 兼容旧类名 */
             background-color: #f2ebf3;
             border-color: #8e6a9f;
         }
 
-        .forum-message.media-engine {
+        .forum-message.customer-engine,
+        .forum-message.media-engine {  /* 兼容旧类名 */
             background-color: #ebf2ea;
             border-color: #6a9a6e;
         }
 
-        .forum-message.agent.QUERY {
+        .forum-message.agent.COMPETE,
+        .forum-message.agent.QUERY {  /* 兼容旧名称 */
             background-color: #eaf1f8;
             border-color: #608ab1;
         }
 
-        .forum-message.agent.query-engine {
+        .forum-message.agent.compete-engine,
+        .forum-message.agent.query-engine {  /* 兼容旧类名 */
             background-color: #eaf1f8;
             border-color: #608ab1;
         }
 
-        .forum-message.agent.MEDIA {
+        .forum-message.agent.CUSTOMER,
+        .forum-message.agent.MEDIA {  /* 兼容旧名称 */
             background-color: #ebf2ea;
             border-color: #6a9a6e;
         }
 
-        .forum-message.agent.media-engine {
+        .forum-message.agent.customer-engine,
+        .forum-message.agent.media-engine {  /* 兼容旧类名 */
             background-color: #ebf2ea;
             border-color: #6a9a6e;
         }
 
-        .forum-message.agent.INSIGHT {
+        .forum-message.agent.MARKET,
+        .forum-message.agent.INSIGHT {  /* 兼容旧名称 */
             background-color: #f2ebf3;
             border-color: #8e6a9f;
         }
 
-        .forum-message.agent.insight-engine {
+        .forum-message.agent.market-engine,
+        .forum-message.agent.insight-engine {  /* 兼容旧类名 */
             background-color: #f2ebf3;
             border-color: #8e6a9f;
         }
@@ -1041,7 +1083,7 @@
     <div class="container">
         <!-- 搜索框区域 -->
         <div class="search-section">
-            <div class="search-title">微舆 - 致力于打造简洁通用的舆情分析平台</div>
+            <div class="search-title">图书管理员 - 致力于打造简洁通用的舆情分析平台</div>
             <div class="search-row">
                 <button class="config-button" id="openConfigButton">LLM 配置</button>
                 <div class="search-box">
@@ -1086,17 +1128,17 @@
             <div class="console-section">
                 <!-- 应用切换按钮 -->
                 <div class="app-switcher">
-                    <button class="app-button active" data-app="insight">
-                        <span class="status-indicator" id="status-insight"></span>
-                        Insight Engine
+                    <button class="app-button active" data-app="market">
+                        <span class="status-indicator" id="status-market"></span>
+                        Market Engine - 市场分析
                     </button>
-                    <button class="app-button" data-app="media">
-                        <span class="status-indicator" id="status-media"></span>
-                        Media Engine
+                    <button class="app-button" data-app="customer">
+                        <span class="status-indicator" id="status-customer"></span>
+                        Customer Engine - 用户分析
                     </button>
-                    <button class="app-button" data-app="query">
-                        <span class="status-indicator" id="status-query"></span>
-                        Query Engine
+                    <button class="app-button" data-app="compete">
+                        <span class="status-indicator" id="status-compete"></span>
+                        Compete Engine - 竞争分析
                     </button>
                     <button class="app-button" data-app="forum">
                         <span class="status-indicator running" id="status-forum"></span>
@@ -1150,13 +1192,13 @@
     <script>
         // 全局变量
         let socket;
-        let currentApp = 'insight';
+        let currentApp = 'market';
         let appStatus = {
-            insight: 'stopped',
-            media: 'stopped',
-            query: 'stopped',
-            forum: 'stopped',  // 前端启动后再标记为 running
-            report: 'stopped'  // Report Engine
+            market: 'stopped',   // Market Agent - 市场分析（原insight）
+            customer: 'stopped', // Customer Agent - 用户分析（原media）
+            compete: 'stopped',  // Compete Agent - 竞争分析（原query）
+            forum: 'stopped',   // Forum Engine
+            report: 'stopped'   // Report Engine
         };
         let customTemplate = ''; // 存储用户上传的自定义模板内容
         let configValues = {};
@@ -1186,30 +1228,39 @@
                 ]
             },
             {
-                title: 'Insight Agent',
+                title: 'Market Agent - 市场分析',
                 subtitle: 'OpenAi接入格式，推荐LLM：kimi-k2',
                 fields: [
-                    { key: 'INSIGHT_ENGINE_API_KEY', label: 'API Key', type: 'password' },
-                    { key: 'INSIGHT_ENGINE_BASE_URL', label: 'Base URL' },
-                    { key: 'INSIGHT_ENGINE_MODEL_NAME', label: '模型名称' }
+                    { key: 'MARKET_ENGINE_API_KEY', label: 'API Key', type: 'password' },
+                    { key: 'MARKET_ENGINE_BASE_URL', label: 'Base URL' },
+                    { key: 'MARKET_ENGINE_MODEL_NAME', label: '模型名称' }
                 ]
             },
             {
-                title: 'Media Agent',
+                title: 'Customer Agent - 用户分析',
                 subtitle: 'OpenAi接入格式，推荐LLM：gemini-2.5-pro',
                 fields: [
-                    { key: 'MEDIA_ENGINE_API_KEY', label: 'API Key', type: 'password' },
-                    { key: 'MEDIA_ENGINE_BASE_URL', label: 'Base URL' },
-                    { key: 'MEDIA_ENGINE_MODEL_NAME', label: '模型名称' }
+                    { key: 'CUSTOMER_ENGINE_API_KEY', label: 'API Key', type: 'password' },
+                    { key: 'CUSTOMER_ENGINE_BASE_URL', label: 'Base URL' },
+                    { key: 'CUSTOMER_ENGINE_MODEL_NAME', label: '模型名称' }
                 ]
             },
             {
-                title: 'Query Agent',
+                title: 'Compete Agent - 竞争分析',
                 subtitle: 'OpenAi接入格式，推荐LLM：deepseek-chat',
                 fields: [
-                    { key: 'QUERY_ENGINE_API_KEY', label: 'API Key', type: 'password' },
-                    { key: 'QUERY_ENGINE_BASE_URL', label: 'Base URL' },
-                    { key: 'QUERY_ENGINE_MODEL_NAME', label: '模型名称' }
+                    { key: 'COMPETE_ENGINE_API_KEY', label: 'API Key', type: 'password' },
+                    { key: 'COMPETE_ENGINE_BASE_URL', label: 'Base URL' },
+                    { key: 'COMPETE_ENGINE_MODEL_NAME', label: '模型名称' }
+                ]
+            },
+            {
+                title: 'Expert Agent - 专家批注',
+                subtitle: 'OpenAi接入格式，推荐LLM：gemini-2.5-pro（可选，未配置则使用Report Agent配置）',
+                fields: [
+                    { key: 'EXPERT_ENGINE_API_KEY', label: 'API Key', type: 'password' },
+                    { key: 'EXPERT_ENGINE_BASE_URL', label: 'Base URL' },
+                    { key: 'EXPERT_ENGINE_MODEL_NAME', label: '模型名称' }
                 ]
             },
             {
@@ -1251,18 +1302,18 @@
 
         // 应用名称映射
         const appNames = {
-            insight: 'Insight Engine',
-            media: 'Media Engine', 
-            query: 'Query Engine',
+            market: 'Market Engine - 市场分析',
+            customer: 'Customer Engine - 用户分析', 
+            compete: 'Compete Engine - 竞争分析',
             forum: 'Forum Engine',
             report: 'Report Engine'
         };
 
         // 页面头部显示的完整Agent介绍
         const agentTitles = {
-            insight: 'Insight Agent - 私有数据库挖掘',
-            media: 'Media Agent - 多模态内容分析', 
-            query: 'Query Agent - 精准信息搜索',
+            market: 'Market Agent - 市场分析',
+            customer: 'Customer Agent - 用户分析', 
+            compete: 'Compete Agent - 竞争分析',
             forum: 'Forum Engine - 多智能体交流',
             report: 'Report Agent - 最终报告生成'
         };
@@ -1916,10 +1967,12 @@
             
             // 向所有运行中的应用发送搜索请求（通过刷新iframe传递参数）
             let totalRunning = 0;
-            const ports = { insight: 8501, media: 8502, query: 8503 };
+            const ports = { market: 8501, customer: 8502, compete: 8503 };  // 更新为新的应用名称
             
             Object.keys(appStatus).forEach(app => {
-                if (appStatus[app] === 'running' && preloadedIframes[app]) {
+                // 只检查三个分析引擎（market, customer, compete），不包括forum和report
+                if ((app === 'market' || app === 'customer' || app === 'compete') && 
+                    appStatus[app] === 'running' && preloadedIframes[app]) {
                     totalRunning++;
                     
                     // 构建搜索URL
@@ -2122,7 +2175,7 @@
         function preloadIframes() {
             if (iframesInitialized) return;
             
-            const ports = { insight: 8501, media: 8502, query: 8503 };
+            const ports = { market: 8501, customer: 8502, compete: 8503 };  // 更新为新的应用名称
             const content = document.getElementById('embeddedContent');
             
             for (const [app, port] of Object.entries(ports)) {
@@ -2633,8 +2686,9 @@
                 const source = sourceMatch[1];
                 const content = sourceMatch[2];
                 
-                // 处理四种消息类型：三个Engine和HOST，过滤掉系统消息和空内容
-                if (!['QUERY', 'INSIGHT', 'MEDIA', 'HOST'].includes(source.toUpperCase()) || 
+                // 处理四种消息类型：三个Engine和HOST，过滤掉系统消息和空内容（新名称优先，兼容旧名称）
+                const validSources = ['MARKET', 'CUSTOMER', 'COMPETE', 'QUERY', 'INSIGHT', 'MEDIA', 'HOST'];
+                if (!validSources.includes(source.toUpperCase()) || 
                     !content || content.includes('=== ForumEngine')) {
                     return null;
                 }
@@ -2644,14 +2698,17 @@
                 let displayName = '';
                 
                 switch(source.toUpperCase()) {
-                    case 'INSIGHT':
-                        displayName = 'Insight Engine';
+                    case 'MARKET':
+                    case 'INSIGHT':  // 兼容旧名称
+                        displayName = 'Market Engine - 市场分析';
                         break;
-                    case 'MEDIA':
-                        displayName = 'Media Engine';
+                    case 'CUSTOMER':
+                    case 'MEDIA':  // 兼容旧名称
+                        displayName = 'Customer Engine - 用户分析';
                         break;
-                    case 'QUERY':
-                        displayName = 'Query Engine';
+                    case 'COMPETE':
+                    case 'QUERY':  // 兼容旧名称
+                        displayName = 'Compete Engine - 竞争分析';
                         break;
                     case 'HOST':
                         messageType = 'host';
@@ -2689,13 +2746,13 @@
                 const sourceClass = data.source.toLowerCase().replace(/\s+/g, '-');
                 messageDiv.classList.add(sourceClass);
                 
-                // 添加具体的engine类
-                if (data.source.toLowerCase().includes('query')) {
-                    messageDiv.classList.add('query-engine');
-                } else if (data.source.toLowerCase().includes('insight')) {
-                    messageDiv.classList.add('insight-engine');
-                } else if (data.source.toLowerCase().includes('media')) {
-                    messageDiv.classList.add('media-engine');
+                // 添加具体的engine类（新名称优先，兼容旧名称）
+                if (data.source.toLowerCase().includes('compete') || data.source.toLowerCase().includes('query')) {
+                    messageDiv.classList.add('compete-engine', 'query-engine');  // 兼容旧类名
+                } else if (data.source.toLowerCase().includes('market') || data.source.toLowerCase().includes('insight')) {
+                    messageDiv.classList.add('market-engine', 'insight-engine');  // 兼容旧类名
+                } else if (data.source.toLowerCase().includes('customer') || data.source.toLowerCase().includes('media')) {
+                    messageDiv.classList.add('customer-engine', 'media-engine');  // 兼容旧类名
                 } else if (data.source.toLowerCase().includes('host')) {
                     messageDiv.classList.add('host');
                 }
@@ -3065,7 +3122,10 @@
             addTaskProgressStatus('正在启动报告生成任务...', 'loading');
             
             // 构建请求数据，包含自定义模板（如果有的话）
-            const requestData = { query: query };
+            const requestData = { 
+                query: query,
+                reset_baseline: true  // 重置基准，以便检测新生成的文件
+            };
             if (customTemplate && customTemplate.trim()) {
                 requestData.custom_template = customTemplate;
                 console.log('使用自定义模板生成报告');

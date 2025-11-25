@@ -22,9 +22,9 @@ input_schema_html_generation = {
     "type": "object",
     "properties": {
         "query": {"type": "string"},
-        "query_engine_report": {"type": "string"},
-        "media_engine_report": {"type": "string"},
-        "insight_engine_report": {"type": "string"},
+        "compete_engine_report": {"type": "string", "description": "竞争分析报告"},
+        "customer_engine_report": {"type": "string", "description": "用户分析报告"},
+        "market_engine_report": {"type": "string", "description": "市场分析报告"},
         "forum_logs": {"type": "string"},
         "selected_template": {"type": "string"}
     }
@@ -71,7 +71,7 @@ SYSTEM_PROMPT_TEMPLATE_SELECTION = f"""
 
 # HTML报告生成的系统提示词
 SYSTEM_PROMPT_HTML_GENERATION = f"""
-你是一位专业的HTML报告生成专家。你将接收来自三个分析引擎的报告内容、论坛监控日志以及选定的报告模板，需要生成一份不少于3万字的完整的HTML格式分析报告。
+你是一位专业的HTML报告生成专家。你将接收来自三个分析引擎的报告内容（竞争分析、用户分析、市场分析）、论坛监控日志以及选定的报告模板，需要生成一份不少于3万字的完整的HTML格式分析报告。
 
 <INPUT JSON SCHEMA>
 {json.dumps(input_schema_html_generation, indent=2, ensure_ascii=False)}

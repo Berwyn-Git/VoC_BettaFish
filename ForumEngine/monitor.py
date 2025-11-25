@@ -31,9 +31,9 @@ class LogMonitor:
        
         # 要监控的日志文件
         self.monitored_logs = {
-            'insight': self.log_dir / 'insight.log',
-            'media': self.log_dir / 'media.log',
-            'query': self.log_dir / 'query.log'
+            'market': self.log_dir / 'market.log',      # 市场分析（原insight）
+            'customer': self.log_dir / 'customer.log',  # 用户分析（原media）
+            'compete': self.log_dir / 'compete.log'     # 竞争分析（原query）
         }
        
         # 监控状态
@@ -58,9 +58,12 @@ class LogMonitor:
         self.target_node_patterns = [
             'FirstSummaryNode',  # 类名
             'ReflectionSummaryNode',  # 类名
-            'InsightEngine.nodes.summary_node',  # InsightEngine完整路径
-            'MediaEngine.nodes.summary_node',  # MediaEngine完整路径
-            'QueryEngine.nodes.summary_node',  # QueryEngine完整路径
+            'MarketEngine.nodes.summary_node',   # MarketEngine完整路径（原InsightEngine）
+            'CustomerEngine.nodes.summary_node', # CustomerEngine完整路径（原MediaEngine）
+            'CompeteEngine.nodes.summary_node',  # CompeteEngine完整路径（原QueryEngine）
+            'InsightEngine.nodes.summary_node',  # 兼容旧名称
+            'MediaEngine.nodes.summary_node',    # 兼容旧名称
+            'QueryEngine.nodes.summary_node',    # 兼容旧名称
             'nodes.summary_node',  # 模块路径（兼容性，用于部分匹配）
             '正在生成首次段落总结',  # FirstSummaryNode的标识
             '正在生成反思总结',  # ReflectionSummaryNode的标识
@@ -359,7 +362,7 @@ class LogMonitor:
                 break
         
         # 移除可能存在的应用名标签（不在方括号内的）
-        app_names = ['INSIGHT', 'MEDIA', 'QUERY']
+        app_names = ['MARKET', 'CUSTOMER', 'COMPETE', 'INSIGHT', 'MEDIA', 'QUERY']  # 新名称优先，兼容旧名称
         for app_name in app_names:
             # 移除单独的APP_NAME（在行首）
             content = re.sub(rf'^{app_name}\s+', '', content, flags=re.IGNORECASE)
@@ -565,7 +568,7 @@ class LogMonitor:
             
         # 先去除所有可能的标签格式（包括 [INSIGHT]、[MEDIA]、[QUERY] 等）
         # 使用更强力的清理方式
-        all_app_names = ['INSIGHT', 'MEDIA', 'QUERY']
+        all_app_names = ['MARKET', 'CUSTOMER', 'COMPETE', 'INSIGHT', 'MEDIA', 'QUERY']  # 新名称优先，兼容旧名称
         
         for name in all_app_names:
             # 去除 [APP_NAME] 格式（大小写不敏感）

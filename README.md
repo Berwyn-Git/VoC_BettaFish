@@ -35,9 +35,9 @@
 
 ## ⚡ 项目概述
 
-“**微舆**” 是一个从0实现的创新型 多智能体 舆情分析系统，帮助大家破除信息茧房，还原舆情原貌，预测未来走向，辅助决策。用户只需像聊天一样提出分析需求，智能体开始全自动分析 国内外30+主流社媒 与 数百万条大众评论。
+“**图书管理员**” 是一个从0实现的创新型 多智能体 舆情分析系统，帮助大家破除信息茧房，还原舆情原貌，预测未来走向，辅助决策。用户只需像聊天一样提出分析需求，智能体开始全自动分析 国内外30+主流社媒 与 数百万条大众评论。
 
-> “微舆”谐音“微鱼”，BettaFish是一种体型很小但非常好斗、漂亮的鱼，它象征着“小而强大，不畏挑战”
+> “图书管理员”象征着知识的管理者、信息的整理者，BettaFish是一种体型很小但非常好斗、漂亮的鱼，它象征着“小而强大，不畏挑战”
 
 查看系统以“武汉大学舆情”为例，生成的研究报告：[武汉大学品牌声誉深度分析报告](./final_reports/final_report__20250827_131630.html)
 
@@ -57,18 +57,18 @@
 
 6. **轻量化与高扩展性框架**：基于纯Python模块化设计，实现轻量化、一键式部署。代码结构清晰，开发者可轻松集成自定义模型与业务逻辑，实现平台的快速扩展与深度定制。
 
-**始于舆情，而不止于舆情**。“微舆”的目标，是成为驱动一切业务场景的简洁通用的数据分析引擎。
+**始于舆情，而不止于舆情**。“图书管理员”的目标，是成为驱动一切业务场景的简洁通用的数据分析引擎。
 
 > 举个例子. 你只需简单修改Agent工具集的api参数与prompt，就可以把他变成一个金融领域的市场分析系统
 >
 > 附一个比较活跃的L站项目讨论帖：https://linux.do/t/topic/1009280
 >
-> 查看L站佬友做的测评 [开源项目(微舆)与manus|minimax|ChatGPT对比](https://linux.do/t/topic/1148040)
+> 查看L站佬友做的测评 [开源项目(图书管理员)与manus|minimax|ChatGPT对比](https://linux.do/t/topic/1148040)
 
 <div align="center">
 <img src="static/image/system_schematic.png" alt="banner" width="800">
 
-告别传统的数据看板，在“微舆”，一切由一个简单的问题开始，您只需像对话一样，提出您的分析需求
+告别传统的数据看板，在“图书管理员”，一切由一个简单的问题开始，您只需像对话一样，提出您的分析需求
 </div>
 
 ## 🪄 赞助商
@@ -78,11 +78,11 @@ LLM模型API赞助：<a href="https://aihubmix.com/?aff=8Ds9" target="_blank"><i
 <details>
 <summary>有赞助LLM算力福利！编程拼车codecodex.ai；编程算力VibeCodingAPI.ai：</a><span style="margin-left: 10px"><a href="https://codecodex.ai/" target="_blank"><img src="./static/image/logo_loincc.png" alt="666ghj%2FBettaFish | Trendshift" height="40"/></a></summary>
 
-1. 所罗门博客LionCC.ai已更新《BettaFish 微舆系统 - LionCC API 部署配置完全指南》正在二开优化一键部署和云服务器调用方案。
-2. VibeCodingapi.ai狮子算力平台已经适配《BettaFish 微舆系统》所有LLM模型含claude code和openai codex和gemini cli编程开发三巨头算力。额度价格，只要一比一（100元等于100美刀额度）
+1. 所罗门博客LionCC.ai已更新《BettaFish 图书管理员系统 - LionCC API 部署配置完全指南》正在二开优化一键部署和云服务器调用方案。
+2. VibeCodingapi.ai狮子算力平台已经适配《BettaFish 图书管理员系统》所有LLM模型含claude code和openai codex和gemini cli编程开发三巨头算力。额度价格，只要一比一（100元等于100美刀额度）
 3. Codecodex.ai狮子编程拼车系统，已实现无IP门槛绕过claude code和openai codex封锁，按官方部署教程后切换BASE_URL调用地址和Token key调用密钥即可使用最强编程模型。
 
-所罗门LionCC赞助BettaFish 微舆福利：打开codecodex.ai狮子编程频道扫码加入微信社群，注册VibeCodingapi.ai狮子算力，统一送20刀API额度（仅限前一千名）
+所罗门LionCC赞助BettaFish 图书管理员福利：打开codecodex.ai狮子编程频道扫码加入微信社群，注册VibeCodingapi.ai狮子算力，统一送20刀API额度（仅限前一千名）
 </details>
 
 <details>
