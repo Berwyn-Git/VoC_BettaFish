@@ -1965,6 +1965,25 @@
                 preloadIframes();
             }
             
+            // 开始新搜索时，重置Report Engine的文件数量基准
+            fetch('/api/report/reset_baseline', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('文件数量基准已重置:', data.baseline);
+                } else {
+                    console.warn('重置基准失败:', data.error);
+                }
+            })
+            .catch(error => {
+                console.warn('重置基准请求失败:', error);
+            });
+            
             // 向所有运行中的应用发送搜索请求（通过刷新iframe传递参数）
             let totalRunning = 0;
             const ports = { market: 8501, customer: 8502, compete: 8503 };  // 更新为新的应用名称
@@ -2954,6 +2973,67 @@
             }
         }
 
+        // 导出报告为PDF
+        function exportReportPDF(taskId) {
+            if (!taskId) {
+                showMessage('任务ID不存在', 'error');
+                return;
+            }
+            
+            const button = document.getElementById(`exportPDFButton_${taskId}`);
+            if (button) {
+                button.disabled = true;
+                button.textContent = '生成PDF中...';
+            }
+            
+            fetch(`/api/report/export_pdf/${taskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // 检查是否是PDF文件
+                    const contentType = response.headers.get('Content-Type') || '';
+                    if (contentType.includes('application/pdf')) {
+                        return response.blob().then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `report_${taskId}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                            showMessage('PDF导出成功', 'success');
+                            if (button) {
+                                button.disabled = false;
+                                button.textContent = '导出PDF';
+                            }
+                        });
+                    } else {
+                        // 可能是JSON错误响应
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'PDF导出失败');
+                        });
+                    }
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'PDF导出失败');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('导出PDF失败:', error);
+                showMessage(`导出PDF失败: ${error.message}`, 'error');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '导出PDF';
+                }
+            });
+        }
+
         function downloadReport(taskId = null) {
             const downloadButton = document.getElementById('downloadReportButton');
             const targetTaskId = taskId || (downloadButton ? downloadButton.dataset.taskId : '');
@@ -3086,6 +3166,7 @@
                     <div class="task-actions">
                         <button class="report-button primary" onclick="viewReport('${task.task_id}')">重新加载</button>
                         ${task.report_file_ready ? `<button class="report-button" onclick="downloadReport('${task.task_id}')">下载HTML</button>` : ''}
+                        <button class="report-button" onclick="exportReportPDF('${task.task_id}')" id="exportPDFButton_${task.task_id}">导出PDF</button>
                     </div>
                 `;
             }
@@ -3123,8 +3204,7 @@
             
             // 构建请求数据，包含自定义模板（如果有的话）
             const requestData = { 
-                query: query,
-                reset_baseline: true  // 重置基准，以便检测新生成的文件
+                query: query
             };
             if (customTemplate && customTemplate.trim()) {
                 requestData.custom_template = customTemplate;

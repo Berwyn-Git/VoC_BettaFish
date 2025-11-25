@@ -114,7 +114,23 @@ class LLMClient:
                     if delta and delta.content:
                         yield delta.content
         except Exception as e:
-            logger.error(f"流式请求失败: {str(e)}")
+            error_type = type(e).__name__
+            error_msg = str(e)
+            logger.error(f"流式请求失败: {error_type}: {error_msg}")
+            logger.error(f"请求配置: model={self.model_name}, base_url={self.base_url}, timeout={timeout}")
+            
+            # 检查常见的连接错误原因
+            if "Connection" in error_type or "connection" in error_msg.lower() or "timeout" in error_msg.lower():
+                logger.error("连接错误诊断:")
+                logger.error("  1. 请检查网络连接是否正常")
+                logger.error("  2. 请检查 API Key 是否有效")
+                logger.error(f"  3. 请检查 Base URL 是否正确: {self.base_url}")
+                logger.error(f"  4. 请检查模型名称是否正确: {self.model_name}")
+                logger.error("  5. 请检查防火墙/代理设置是否阻止了连接")
+                logger.error("  6. 请检查 API 服务是否可用（可能服务暂时不可用）")
+                if not self.api_key or len(self.api_key) < 10:
+                    logger.error("  7. ⚠️  API Key 可能未正确配置或过短")
+            
             raise e
     
     @with_retry(LLM_RETRY_CONFIG)

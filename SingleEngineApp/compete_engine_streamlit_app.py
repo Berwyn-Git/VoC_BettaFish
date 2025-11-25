@@ -195,8 +195,13 @@ def display_results(agent: DeepSearchAgent, final_report: str):
                 from utils.pdf_export import export_report_to_pdf, PDF_EXPORT_AVAILABLE
                 
                 if not PDF_EXPORT_AVAILABLE:
-                    st.error("PDF导出功能不可用，请安装: pip install markdown weasyprint")
+                    st.error("PDF导出功能不可用，请安装: pip install markdown weasyprint 或 pip install reportlab")
                 else:
+                    # 显示调试信息
+                    st.info(f"📝 报告内容长度: {len(final_report)} 字符")
+                    st.info(f"📁 输出目录: {agent.config.OUTPUT_DIR}")
+                    st.info(f"🔍 查询内容: {agent.state.query}")
+                    
                     with st.spinner("正在生成PDF..."):
                         pdf_path = export_report_to_pdf(
                             report_content=final_report,
@@ -206,21 +211,40 @@ def display_results(agent: DeepSearchAgent, final_report: str):
                         )
                         
                         if pdf_path:
-                            # 读取PDF文件并提供下载
-                            with open(pdf_path, 'rb') as pdf_file:
-                                st.download_button(
-                                    label="📥 下载PDF",
-                                    data=pdf_file.read(),
-                                    file_name=os.path.basename(pdf_path),
-                                    mime="application/pdf",
-                                    use_container_width=True
-                                )
-                            st.success(f"PDF已生成: {os.path.basename(pdf_path)}")
+                            # 验证文件是否存在
+                            if os.path.exists(pdf_path):
+                                # 读取PDF文件并提供下载
+                                with open(pdf_path, 'rb') as pdf_file:
+                                    pdf_data = pdf_file.read()
+                                    file_size = len(pdf_data)
+                                    st.download_button(
+                                        label="📥 下载PDF",
+                                        data=pdf_data,
+                                        file_name=os.path.basename(pdf_path),
+                                        mime="application/pdf",
+                                        use_container_width=True
+                                    )
+                                st.success(f"✅ PDF已生成: {os.path.basename(pdf_path)}")
+                                st.info(f"📁 文件位置: {pdf_path}")
+                                st.info(f"📊 文件大小: {file_size:,} 字节")
+                            else:
+                                st.error(f"❌ PDF文件不存在: {pdf_path}")
+                                logger.error(f"PDF文件不存在: {pdf_path}")
+                                # 尝试列出目录内容
+                                output_dir_abs = os.path.abspath(agent.config.OUTPUT_DIR)
+                                if os.path.exists(output_dir_abs):
+                                    files = os.listdir(output_dir_abs)
+                                    st.warning(f"目录 {output_dir_abs} 中的文件: {files[:10]}")
                         else:
-                            st.error("PDF生成失败，请查看日志")
+                            st.error("❌ PDF生成失败，export_report_to_pdf 返回 None")
+                            logger.error("export_report_to_pdf 返回 None")
+                            st.info("💡 提示: 请检查日志文件以获取详细错误信息")
             except Exception as e:
-                st.error(f"导出PDF时出错: {str(e)}")
-                logger.exception(f"导出PDF失败: {str(e)}")
+                error_msg = str(e)
+                st.error(f"❌ 导出PDF时出错: {error_msg}")
+                logger.exception(f"导出PDF失败: {error_msg}")
+                import traceback
+                st.code(traceback.format_exc(), language="python")
 
     # 结果标签页（已移除下载选项）
     tab1, tab2 = st.tabs(["研究小结", "引用信息"])

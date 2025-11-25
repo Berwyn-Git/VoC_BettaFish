@@ -217,7 +217,9 @@ class TemplateSelectionNode(BaseNode):
     
     def _extract_template_description(self, template_name: str) -> str:
         """根据模板名称生成描述"""
-        if '企业品牌' in template_name:
+        if '综合分析' in template_name or '全面分析' in template_name:
+            return "适用于全面深度综合分析，整合Market、Customer、Compete三个Agent的协同分析能力，进行多维度交叉验证和深度洞察"
+        elif '企业品牌' in template_name:
             return "适用于企业品牌声誉和形象分析"
         elif '市场竞争' in template_name:
             return "适用于市场竞争格局和对手分析"
@@ -229,6 +231,20 @@ class TemplateSelectionNode(BaseNode):
             return "适用于社会热点和公共事件分析"
         elif '突发' in template_name or '危机' in template_name:
             return "适用于突发事件和危机公关"
+        elif '产品发布' in template_name or '上市' in template_name:
+            return "适用于产品发布与上市综合分析，整合市场、用户、竞争数据"
+        elif '用户满意' in template_name or '体验' in template_name:
+            return "适用于用户满意度与体验分析，深度分析多平台用户反馈"
+        elif '趋势' in template_name or '机会' in template_name:
+            return "适用于行业趋势预测与机会洞察，整合三个Agent的数据"
+        elif '营销效果' in template_name or '社交媒体' in template_name:
+            return "适用于社交媒体营销效果评估，分析跨平台传播效果"
+        elif '竞品功能' in template_name or '功能对比' in template_name:
+            return "适用于竞品功能对比深度分析，对比功能、体验、市场表现"
+        elif '传播路径' in template_name or '影响力' in template_name:
+            return "适用于品牌传播路径与影响力分析，分析传播路径和影响力"
+        elif '用户画像' in template_name or '行为洞察' in template_name:
+            return "适用于用户画像与行为洞察，构建用户画像和分析行为模式"
         
         return "通用报告模板"
     

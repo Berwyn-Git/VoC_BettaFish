@@ -310,11 +310,11 @@ class ReportAgent:
             return template_result
         except Exception as e:
             logger.error(f"模板选择失败，使用默认模板: {str(e)}")
-            # 直接使用备用模板
+            # 直接使用备用模板（优先使用综合分析模板）
             fallback_template = {
-                'template_name': '社会公共热点事件分析报告模板',
+                'template_name': '综合分析报告模板',
                 'template_content': self._get_fallback_template_content(),
-                'selection_reason': '模板选择失败，使用默认社会热点事件分析模板'
+                'selection_reason': '模板选择失败，使用默认综合分析模板（可充分利用三个Agent的协同分析能力）'
             }
             self.state.metadata.template_used = fallback_template['template_name']
             return fallback_template

@@ -55,6 +55,7 @@ class ReportTask:
         self.report_file_name = ""
         self.state_file_path = ""
         self.state_file_relative_path = ""
+        self.pdf_file_path = ""
 
     def update_status(self, status: str, progress: int = None, error_message: str = ""):
         """更新任务状态"""
@@ -78,7 +79,8 @@ class ReportTask:
             'has_result': bool(self.html_content),
             'report_file_ready': bool(self.report_file_path),
             'report_file_name': self.report_file_name,
-            'report_file_path': self.report_file_relative_path
+            'report_file_path': self.report_file_relative_path,
+            'pdf_file_path': self.pdf_file_path if hasattr(self, 'pdf_file_path') else ''
         }
 
 
@@ -146,6 +148,129 @@ def run_report_generation(task: ReportTask, query: str, custom_template: str = "
         task.report_file_name = generation_result.get('report_filename', '')
         task.state_file_path = generation_result.get('state_filepath', '')
         task.state_file_relative_path = generation_result.get('state_relative_path', '')
+        
+        # 报告生成完成后，更新基准（将当前文件数量设为新基准）
+        try:
+            directories = {
+                'market': 'market_engine_streamlit_reports',
+                'customer': 'customer_engine_streamlit_reports',
+                'compete': 'compete_engine_streamlit_reports'
+            }
+            report_agent.file_baseline.initialize_baseline(directories)
+            logger.info("报告生成完成，已更新文件数量基准")
+        except Exception as e:
+            logger.warning(f"更新基准失败: {str(e)}")
+        
+        # 自动导出PDF报告（优先使用直接HTML转PDF）
+        try:
+            from utils.pdf_export import html_to_pdf_direct
+            
+            # 如果报告已保存为HTML文件，直接使用HTML文件
+            if task.report_file_path and os.path.exists(task.report_file_path):
+                html_file = task.report_file_path
+                
+                # 生成PDF文件名
+                base_name = os.path.basename(html_file)
+                pdf_filename = os.path.splitext(base_name)[0] + ".pdf"
+                pdf_path = os.path.join(report_agent.config.OUTPUT_DIR, pdf_filename)
+                pdf_path = os.path.abspath(pdf_path)
+                
+                logger.info(f"开始自动导出PDF（直接HTML转PDF）: {html_file} -> {pdf_path}")
+                
+                # 直接HTML转PDF
+                success = html_to_pdf_direct(html_file, pdf_path)
+                
+                if success and os.path.exists(pdf_path):
+                    task.pdf_file_path = pdf_path
+                    logger.info(f"汇总报告PDF已生成（直接HTML转PDF）: {pdf_path}")
+                else:
+                    logger.warning("直接HTML转PDF失败，尝试使用Markdown转PDF方法")
+                    # 回退到Markdown方法
+                    raise Exception("HTML转PDF失败")
+            else:
+                logger.warning("HTML文件不存在，跳过自动PDF导出")
+                
+        except Exception as html_error:
+            logger.warning(f"直接HTML转PDF失败: {str(html_error)}，尝试使用Markdown转PDF方法")
+            
+            # 回退到Markdown转PDF方法
+            try:
+                # 确保重新导入以获取最新状态
+                import importlib
+                import sys
+                
+                # 如果模块已经在sys.modules中，先移除它
+                if 'utils.pdf_export' in sys.modules:
+                    del sys.modules['utils.pdf_export']
+                
+                # 重新导入模块
+                import utils.pdf_export
+                importlib.reload(utils.pdf_export)
+                from utils.pdf_export import export_report_to_pdf, PDF_EXPORT_AVAILABLE, MARKDOWN_AVAILABLE
+                
+                logger.info(f"PDF导出功能状态检查: MARKDOWN_AVAILABLE={MARKDOWN_AVAILABLE}, PDF_EXPORT_AVAILABLE={PDF_EXPORT_AVAILABLE}")
+                
+                if PDF_EXPORT_AVAILABLE:
+                # 将HTML转换为Markdown（简单提取文本内容）
+                import re
+                from html.parser import HTMLParser
+                
+                class HTMLToText(HTMLParser):
+                    def __init__(self):
+                        super().__init__()
+                        self.text = []
+                        self.skip_tags = {'script', 'style', 'head'}
+                        self.in_skip = False
+                    
+                    def handle_starttag(self, tag, attrs):
+                        if tag.lower() in self.skip_tags:
+                            self.in_skip = True
+                        elif tag.lower() == 'h1':
+                            self.text.append('\n# ')
+                        elif tag.lower() == 'h2':
+                            self.text.append('\n## ')
+                        elif tag.lower() == 'h3':
+                            self.text.append('\n### ')
+                        elif tag.lower() == 'p':
+                            self.text.append('\n')
+                        elif tag.lower() == 'br':
+                            self.text.append('\n')
+                    
+                    def handle_endtag(self, tag):
+                        if tag.lower() in self.skip_tags:
+                            self.in_skip = False
+                        elif tag.lower() in {'h1', 'h2', 'h3', 'p'}:
+                            self.text.append('\n')
+                    
+                    def handle_data(self, data):
+                        if not self.in_skip:
+                            self.text.append(data.strip())
+                
+                parser = HTMLToText()
+                parser.feed(html_report)
+                markdown_content = ''.join(parser.text)
+                
+                # 清理多余的空白行
+                markdown_content = re.sub(r'\n{3,}', '\n\n', markdown_content)
+                
+                # 导出PDF
+                pdf_path = export_report_to_pdf(
+                    report_content=markdown_content,
+                    output_dir=report_agent.config.OUTPUT_DIR,
+                    query=query,
+                    engine_name="report"
+                )
+                
+                if pdf_path:
+                    task.pdf_file_path = pdf_path
+                    logger.info(f"汇总报告PDF已生成: {pdf_path}")
+                else:
+                    logger.warning("PDF导出失败")
+            else:
+                logger.warning("PDF导出功能不可用")
+        except Exception as e:
+            logger.warning(f"自动导出PDF失败: {str(e)}")
+        
         task.update_status("completed", 100)
 
     except Exception as e:
@@ -202,7 +327,6 @@ def generate_report():
         data = request.get_json() or {}
         query = data.get('query', '智能舆情分析报告')
         custom_template = data.get('custom_template', '')
-        reset_baseline = data.get('reset_baseline', True)  # 默认重置基准，以便检测新文件
 
         # 清空日志文件
         clear_report_log()
@@ -214,23 +338,16 @@ def generate_report():
                 'error': 'Report Engine未初始化'
             }), 500
 
-        # 如果需要重置基准（开始新搜索时），重置基准以便检测新生成的文件
-        if reset_baseline:
-            directories = {
-                'market': 'market_engine_streamlit_reports',
-                'customer': 'customer_engine_streamlit_reports',
-                'compete': 'compete_engine_streamlit_reports'
-            }
-            report_agent.file_baseline.reset_baseline(directories)
-            logger.info("已重置文件数量基准，准备检测新文件")
-
-        # 检查输入文件是否准备就绪
+        # 检查输入文件是否准备就绪（不重置基准，使用现有基准检测新文件）
         engines_status = check_engines_ready()
         if not engines_status['ready']:
             return jsonify({
                 'success': False,
                 'error': '输入文件未准备就绪',
-                'missing_files': engines_status.get('missing_files', [])
+                'missing_files': engines_status.get('missing_files', []),
+                'baseline_counts': engines_status.get('baseline_counts', {}),
+                'current_counts': engines_status.get('current_counts', {}),
+                'new_files_found': engines_status.get('new_files_found', {})
             }), 400
 
         # 创建新任务
@@ -321,6 +438,187 @@ def get_result(task_id: str):
 
     except Exception as e:
         logger.exception(f"获取报告生成结果失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@report_bp.route('/export_pdf/<task_id>', methods=['POST'])
+def export_pdf(task_id: str):
+    """导出报告为PDF"""
+    try:
+        if not current_task or current_task.task_id != task_id:
+            return jsonify({
+                'success': False,
+                'error': '任务不存在'
+            }), 404
+        
+        if current_task.status != "completed":
+            return jsonify({
+                'success': False,
+                'error': '报告尚未完成',
+                'task': current_task.to_dict()
+            }), 400
+        
+        # 优先使用直接HTML转PDF（保持与浏览器完全一致的格式）
+        try:
+            from utils.pdf_export import html_to_pdf_direct
+            
+            # 如果报告已保存为HTML文件，直接使用HTML文件
+            if current_task.report_file_path and os.path.exists(current_task.report_file_path):
+                html_file = current_task.report_file_path
+            else:
+                # 如果没有保存的HTML文件，先保存HTML内容到临时文件
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                query_safe = "".join(c for c in current_task.query if c.isalnum() or c in (' ', '-', '_')).rstrip()[:30]
+                if not query_safe:
+                    query_safe = "report"
+                
+                html_file = os.path.join(report_agent.config.OUTPUT_DIR, f"temp_report_{query_safe}_{timestamp}.html")
+                os.makedirs(os.path.dirname(html_file), exist_ok=True)
+                
+                with open(html_file, 'w', encoding='utf-8') as f:
+                    f.write(current_task.html_content)
+                logger.info(f"临时HTML文件已保存: {html_file}")
+            
+            # 生成PDF文件名
+            base_name = os.path.basename(html_file)
+            pdf_filename = os.path.splitext(base_name)[0] + ".pdf"
+            pdf_path = os.path.join(report_agent.config.OUTPUT_DIR, pdf_filename)
+            pdf_path = os.path.abspath(pdf_path)
+            
+            logger.info(f"开始将HTML直接转换为PDF: {html_file} -> {pdf_path}")
+            
+            # 直接HTML转PDF
+            success = html_to_pdf_direct(html_file, pdf_path)
+            
+            if success and os.path.exists(pdf_path):
+                # 清理临时HTML文件（如果是临时文件）
+                if html_file.startswith('temp_'):
+                    try:
+                        os.remove(html_file)
+                        logger.info(f"临时HTML文件已删除: {html_file}")
+                    except:
+                        pass
+                
+                # 返回PDF文件
+                return send_file(
+                    pdf_path,
+                    as_attachment=True,
+                    download_name=os.path.basename(pdf_path),
+                    mimetype='application/pdf'
+                )
+            else:
+                logger.warning("直接HTML转PDF失败，尝试使用Markdown转PDF方法")
+                # 如果直接HTML转PDF失败，回退到Markdown方法
+                raise Exception("HTML转PDF失败，尝试Markdown方法")
+                
+        except Exception as e:
+            logger.warning(f"直接HTML转PDF失败: {str(e)}，尝试使用Markdown转PDF方法")
+            
+            # 回退到Markdown转PDF方法
+            try:
+                import importlib
+                import sys
+                
+                # 如果模块已经在sys.modules中，先移除它
+                if 'utils.pdf_export' in sys.modules:
+                    del sys.modules['utils.pdf_export']
+                
+                # 重新导入模块
+                import utils.pdf_export
+                importlib.reload(utils.pdf_export)
+                from utils.pdf_export import export_report_to_pdf, PDF_EXPORT_AVAILABLE, MARKDOWN_AVAILABLE
+                
+                logger.info(f"PDF导出功能状态检查: MARKDOWN_AVAILABLE={MARKDOWN_AVAILABLE}, PDF_EXPORT_AVAILABLE={PDF_EXPORT_AVAILABLE}")
+                
+                if not PDF_EXPORT_AVAILABLE:
+                    return jsonify({
+                        'success': False,
+                        'error': 'PDF导出功能不可用，请安装: pip install playwright 或 pip install markdown reportlab'
+                    }), 400
+                
+                # 将HTML转换为Markdown
+                import re
+                from html.parser import HTMLParser
+                
+                class HTMLToText(HTMLParser):
+                    def __init__(self):
+                        super().__init__()
+                        self.text = []
+                        self.skip_tags = {'script', 'style', 'head'}
+                        self.in_skip = False
+                    
+                    def handle_starttag(self, tag, attrs):
+                        if tag.lower() in self.skip_tags:
+                            self.in_skip = True
+                        elif tag.lower() == 'h1':
+                            self.text.append('\n# ')
+                        elif tag.lower() == 'h2':
+                            self.text.append('\n## ')
+                        elif tag.lower() == 'h3':
+                            self.text.append('\n### ')
+                        elif tag.lower() == 'p':
+                            self.text.append('\n')
+                        elif tag.lower() == 'br':
+                            self.text.append('\n')
+                    
+                    def handle_endtag(self, tag):
+                        if tag.lower() in self.skip_tags:
+                            self.in_skip = False
+                        elif tag.lower() in {'h1', 'h2', 'h3', 'p'}:
+                            self.text.append('\n')
+                    
+                    def handle_data(self, data):
+                        if not self.in_skip:
+                            self.text.append(data.strip())
+                
+                parser = HTMLToText()
+                parser.feed(current_task.html_content)
+                markdown_content = ''.join(parser.text)
+                
+                # 清理多余的空白行
+                markdown_content = re.sub(r'\n{3,}', '\n\n', markdown_content)
+                
+                # 导出PDF
+                pdf_path = export_report_to_pdf(
+                    report_content=markdown_content,
+                    output_dir=report_agent.config.OUTPUT_DIR,
+                    query=current_task.query,
+                    engine_name="report"
+                )
+                
+                if pdf_path and os.path.exists(pdf_path):
+                    # 返回PDF文件
+                    return send_file(
+                        pdf_path,
+                        as_attachment=True,
+                        download_name=os.path.basename(pdf_path),
+                        mimetype='application/pdf'
+                    )
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'PDF生成失败'
+                    }), 500
+            except Exception as markdown_error:
+                logger.exception(f"Markdown转PDF也失败: {str(markdown_error)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'PDF导出失败: {str(markdown_error)}'
+                }), 500
+                
+        except ImportError as e:
+            logger.exception(f"PDF导出功能导入失败: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': f'PDF导出功能不可用: {str(e)}'
+            }), 500
+            
+    except Exception as e:
+        logger.exception(f"导出PDF失败: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -545,4 +843,38 @@ def clear_log():
         return jsonify({
             'success': False,
             'error': f'清空日志失败: {str(e)}'
+        }), 500
+
+
+@report_bp.route('/reset_baseline', methods=['POST'])
+def reset_baseline_api():
+    """重置文件数量基准（在开始新搜索时调用）"""
+    try:
+        if not report_agent:
+            return jsonify({
+                'success': False,
+                'error': 'Report Engine未初始化'
+            }), 500
+        
+        directories = {
+            'market': 'market_engine_streamlit_reports',
+            'customer': 'customer_engine_streamlit_reports',
+            'compete': 'compete_engine_streamlit_reports'
+        }
+        
+        # 重置基准
+        report_agent.file_baseline.reset_baseline(directories)
+        
+        logger.info("文件数量基准已重置，准备检测新文件")
+        
+        return jsonify({
+            'success': True,
+            'message': '文件数量基准已重置',
+            'baseline': report_agent.file_baseline.baseline_data
+        })
+    except Exception as e:
+        logger.exception(f"重置基准失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'重置基准失败: {str(e)}'
         }), 500
