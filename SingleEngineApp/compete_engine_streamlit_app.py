@@ -58,8 +58,7 @@ def main():
 
     # ----- 配置被硬编码 -----
     # 强制使用 DeepSeek
-    # 优先使用新配置，兼容旧配置
-    model_name = (settings.COMPETE_ENGINE_MODEL_NAME or settings.QUERY_ENGINE_MODEL_NAME or "deepseek-chat")
+    model_name = settings.COMPETE_ENGINE_MODEL_NAME or "deepseek-chat"
     # 默认高级配置
     max_reflections = 2
     max_content_length = 20000
@@ -95,10 +94,9 @@ def main():
             st.error("请输入研究查询")
             return
 
-        # 检查API密钥（优先使用新配置，兼容旧配置）
-        engine_key = settings.COMPETE_ENGINE_API_KEY or settings.QUERY_ENGINE_API_KEY
-        if not engine_key:
-            st.error("请在您的环境变量中设置COMPETE_ENGINE_API_KEY或QUERY_ENGINE_API_KEY")
+        # 检查API密钥
+        if not settings.COMPETE_ENGINE_API_KEY:
+            st.error("请在您的环境变量中设置COMPETE_ENGINE_API_KEY")
             return
         if not settings.TAVILY_API_KEY:
             st.error("请在您的环境变量中设置TAVILY_API_KEY")
@@ -109,16 +107,13 @@ def main():
 
         # 创建配置
         config = Settings(
-            COMPETE_ENGINE_API_KEY=engine_key or settings.COMPETE_ENGINE_API_KEY,  # 优先使用新配置
-            COMPETE_ENGINE_BASE_URL=settings.COMPETE_ENGINE_BASE_URL or settings.QUERY_ENGINE_BASE_URL,
-            COMPETE_ENGINE_MODEL_NAME=model_name or settings.COMPETE_ENGINE_MODEL_NAME or settings.QUERY_ENGINE_MODEL_NAME,
-            QUERY_ENGINE_API_KEY=engine_key,  # 兼容旧配置
-            QUERY_ENGINE_BASE_URL=settings.QUERY_ENGINE_BASE_URL,
-            QUERY_ENGINE_MODEL_NAME=model_name,
+            COMPETE_ENGINE_API_KEY=settings.COMPETE_ENGINE_API_KEY,
+            COMPETE_ENGINE_BASE_URL=settings.COMPETE_ENGINE_BASE_URL,
+            COMPETE_ENGINE_MODEL_NAME=model_name or settings.COMPETE_ENGINE_MODEL_NAME,
             TAVILY_API_KEY=tavily_key,
             MAX_REFLECTIONS=max_reflections,
             SEARCH_CONTENT_MAX_LENGTH=max_content_length,
-            OUTPUT_DIR="compete_engine_streamlit_reports"  # 竞争分析（原query）
+            OUTPUT_DIR="compete_engine_streamlit_reports"
         )
 
         # 执行研究

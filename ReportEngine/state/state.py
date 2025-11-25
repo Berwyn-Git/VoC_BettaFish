@@ -46,35 +46,6 @@ class ReportState:
             self.task_id = f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.metadata.query = self.query
     
-    @property
-    def query_engine_report(self) -> str:
-        """[已废弃] 兼容旧字段名，请使用 compete_engine_report"""
-        return self.compete_engine_report
-    
-    @query_engine_report.setter
-    def query_engine_report(self, value: str):
-        """[已废弃] 兼容旧字段名，请使用 compete_engine_report"""
-        self.compete_engine_report = value
-    
-    @property
-    def media_engine_report(self) -> str:
-        """[已废弃] 兼容旧字段名，请使用 customer_engine_report"""
-        return self.customer_engine_report
-    
-    @media_engine_report.setter
-    def media_engine_report(self, value: str):
-        """[已废弃] 兼容旧字段名，请使用 customer_engine_report"""
-        self.customer_engine_report = value
-    
-    @property
-    def insight_engine_report(self) -> str:
-        """[已废弃] 兼容旧字段名，请使用 market_engine_report"""
-        return self.market_engine_report
-    
-    @insight_engine_report.setter
-    def insight_engine_report(self, value: str):
-        """[已废弃] 兼容旧字段名，请使用 market_engine_report"""
-        self.market_engine_report = value
     
     forum_logs: str = ""                 # 论坛日志
     
@@ -157,10 +128,10 @@ class ReportState:
                 selected_template=data.get("selected_template", "")
             )
             
-            # 加载报告内容（支持新旧字段名）
-            state.compete_engine_report = data.get("compete_engine_report", data.get("query_engine_report", ""))
-            state.customer_engine_report = data.get("customer_engine_report", data.get("media_engine_report", ""))
-            state.market_engine_report = data.get("market_engine_report", data.get("insight_engine_report", ""))
+            # 加载报告内容
+            state.compete_engine_report = data.get("compete_engine_report", "")
+            state.customer_engine_report = data.get("customer_engine_report", "")
+            state.market_engine_report = data.get("market_engine_report", "")
             
             # 设置元数据
             metadata_data = data.get("metadata", {})

@@ -59,8 +59,7 @@ def main():
 
     # ----- 配置被硬编码 -----
     # 强制使用 Gemini
-    # 优先使用新配置，兼容旧配置
-    model_name = (settings.CUSTOMER_ENGINE_MODEL_NAME or settings.MEDIA_ENGINE_MODEL_NAME or "gemini-2.5-pro")
+    model_name = settings.CUSTOMER_ENGINE_MODEL_NAME or "gemini-2.5-pro"
     # 默认高级配置
     max_reflections = 2
     max_content_length = 20000
@@ -97,11 +96,10 @@ def main():
             logger.error("请输入研究查询")
             return
 
-        # 检查API密钥（优先使用新配置，兼容旧配置）
-        engine_key = settings.CUSTOMER_ENGINE_API_KEY or settings.MEDIA_ENGINE_API_KEY
-        if not engine_key:
-            st.error("请在您的环境变量中设置CUSTOMER_ENGINE_API_KEY或MEDIA_ENGINE_API_KEY")
-            logger.error("请在您的环境变量中设置CUSTOMER_ENGINE_API_KEY或MEDIA_ENGINE_API_KEY")
+        # 检查API密钥
+        if not settings.CUSTOMER_ENGINE_API_KEY:
+            st.error("请在您的环境变量中设置CUSTOMER_ENGINE_API_KEY")
+            logger.error("请在您的环境变量中设置CUSTOMER_ENGINE_API_KEY")
             return
         if not settings.BOCHA_WEB_SEARCH_API_KEY:
             st.error("请在您的环境变量中设置BOCHA_WEB_SEARCH_API_KEY")
@@ -113,16 +111,13 @@ def main():
 
         # 构建 Settings（pydantic_settings风格，优先大写环境变量）
         config = Settings(
-            CUSTOMER_ENGINE_API_KEY=engine_key or settings.CUSTOMER_ENGINE_API_KEY,  # 优先使用新配置
-            CUSTOMER_ENGINE_BASE_URL=settings.CUSTOMER_ENGINE_BASE_URL or settings.MEDIA_ENGINE_BASE_URL,
-            CUSTOMER_ENGINE_MODEL_NAME=model_name or settings.CUSTOMER_ENGINE_MODEL_NAME or settings.MEDIA_ENGINE_MODEL_NAME,
-            MEDIA_ENGINE_API_KEY=engine_key,  # 兼容旧配置
-            MEDIA_ENGINE_BASE_URL=settings.MEDIA_ENGINE_BASE_URL,
-            MEDIA_ENGINE_MODEL_NAME=model_name,
+            CUSTOMER_ENGINE_API_KEY=settings.CUSTOMER_ENGINE_API_KEY,
+            CUSTOMER_ENGINE_BASE_URL=settings.CUSTOMER_ENGINE_BASE_URL,
+            CUSTOMER_ENGINE_MODEL_NAME=model_name or settings.CUSTOMER_ENGINE_MODEL_NAME,
             BOCHA_WEB_SEARCH_API_KEY=bocha_key,
             MAX_REFLECTIONS=max_reflections,
             SEARCH_CONTENT_MAX_LENGTH=max_content_length,
-            OUTPUT_DIR="customer_engine_streamlit_reports",  # 用户分析（原media）
+            OUTPUT_DIR="customer_engine_streamlit_reports",
         )
 
         # 执行研究

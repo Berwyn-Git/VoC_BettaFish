@@ -40,7 +40,7 @@ class LLMClient:
         self.base_url = base_url
         self.model_name = model_name
         self.provider = model_name
-        timeout_fallback = os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("COMPETE_ENGINE_REQUEST_TIMEOUT") or os.getenv("QUERY_ENGINE_REQUEST_TIMEOUT") or "1800"
+        timeout_fallback = os.getenv("LLM_REQUEST_TIMEOUT") or os.getenv("COMPETE_ENGINE_REQUEST_TIMEOUT") or "1800"
         try:
             self.timeout = float(timeout_fallback)
         except ValueError:

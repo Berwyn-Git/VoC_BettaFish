@@ -63,10 +63,9 @@ class DeepSearchAgent:
     
     def _initialize_llm(self) -> LLMClient:
         """初始化LLM客户端"""
-        # 优先使用新配置，向后兼容旧配置
-        api_key = self.config.MARKET_ENGINE_API_KEY or self.config.INSIGHT_ENGINE_API_KEY
-        model_name = self.config.MARKET_ENGINE_MODEL_NAME or self.config.INSIGHT_ENGINE_MODEL_NAME
-        base_url = self.config.MARKET_ENGINE_BASE_URL or self.config.INSIGHT_ENGINE_BASE_URL
+        api_key = self.config.MARKET_ENGINE_API_KEY
+        model_name = self.config.MARKET_ENGINE_MODEL_NAME
+        base_url = self.config.MARKET_ENGINE_BASE_URL
         return LLMClient(
             api_key=api_key,
             model_name=model_name,

@@ -57,8 +57,8 @@ def main():
         auto_search = query_params.get('auto_search', ['false'])[0].lower() == 'true'
 
     # ----- 配置被硬编码 -----
-    # 强制使用 Kimi（优先使用新配置，兼容旧配置）
-    model_name = (settings.MARKET_ENGINE_MODEL_NAME or settings.INSIGHT_ENGINE_MODEL_NAME or "kimi-k2-0711-preview")
+    # 强制使用 Kimi
+    model_name = settings.MARKET_ENGINE_MODEL_NAME or "kimi-k2-0711-preview"
     # 默认高级配置
     max_reflections = 2
     max_content_length = 500000  # Kimi支持长文本
@@ -96,11 +96,9 @@ def main():
             return
 
         # 检查配置中的LLM密钥
-        # 检查API密钥（优先使用新配置，兼容旧配置）
-        api_key = settings.MARKET_ENGINE_API_KEY or settings.INSIGHT_ENGINE_API_KEY
-        if not api_key:
-            st.error("请在您的环境变量中设置MARKET_ENGINE_API_KEY或INSIGHT_ENGINE_API_KEY")
-            logger.error("请在您的环境变量中设置MARKET_ENGINE_API_KEY或INSIGHT_ENGINE_API_KEY")
+        if not settings.MARKET_ENGINE_API_KEY:
+            st.error("请在您的环境变量中设置MARKET_ENGINE_API_KEY")
+            logger.error("请在您的环境变量中设置MARKET_ENGINE_API_KEY")
             return
 
         # 自动使用配置文件中的API密钥和数据库配置
@@ -113,12 +111,9 @@ def main():
 
         # 创建Settings配置（字段必须用大写，以适配Settings类）
         config = Settings(
-            MARKET_ENGINE_API_KEY=settings.MARKET_ENGINE_API_KEY or settings.INSIGHT_ENGINE_API_KEY,  # 优先使用新配置
-            MARKET_ENGINE_BASE_URL=settings.MARKET_ENGINE_BASE_URL or settings.INSIGHT_ENGINE_BASE_URL,
-            MARKET_ENGINE_MODEL_NAME=model_name or settings.MARKET_ENGINE_MODEL_NAME or settings.INSIGHT_ENGINE_MODEL_NAME,
-            INSIGHT_ENGINE_API_KEY=settings.INSIGHT_ENGINE_API_KEY,  # 兼容旧配置
-            INSIGHT_ENGINE_BASE_URL=settings.INSIGHT_ENGINE_BASE_URL,
-            INSIGHT_ENGINE_MODEL_NAME=model_name,
+            MARKET_ENGINE_API_KEY=settings.MARKET_ENGINE_API_KEY,
+            MARKET_ENGINE_BASE_URL=settings.MARKET_ENGINE_BASE_URL,
+            MARKET_ENGINE_MODEL_NAME=model_name or settings.MARKET_ENGINE_MODEL_NAME,
             DB_HOST=db_host,
             DB_USER=db_user,
             DB_PASSWORD=db_password,

@@ -100,17 +100,30 @@ async def _create_views_if_needed(engine_dialect: str):
 async def main() -> None:
     database_url = _build_database_url()
     engine = create_async_engine(database_url, pool_pre_ping=True, pool_recycle=1800)
+    
+    # 获取数据库类型，用于后续判断
+    dialect_name = engine.url.get_backend_name()
 
     # 由于 models_bigdata 和 models_sa 现在共享同一个 Base，所有表都在同一个 metadata 中
     # 先删除所有表（如果存在），然后重新创建，确保表结构是最新的
     async with engine.begin() as conn:
+        # PostgreSQL 需要先删除视图，因为它们依赖于表
+        # 检查数据库类型，如果是 PostgreSQL，先删除视图
+        if dialect_name == "postgresql":
+            try:
+                # 删除视图（如果存在），使用 CASCADE 确保删除所有依赖
+                await conn.execute(text("DROP VIEW IF EXISTS v_topic_crawling_stats CASCADE"))
+                await conn.execute(text("DROP VIEW IF EXISTS v_daily_summary CASCADE"))
+                logger.info("已删除现有视图")
+            except Exception as e:
+                logger.warning(f"删除视图时出现警告（可能视图不存在）: {e}")
+        
         # 删除所有表（按依赖顺序，先删除有外键的表）
         await conn.run_sync(Base.metadata.drop_all)
         # 重新创建所有表
         await conn.run_sync(Base.metadata.create_all)
 
     # 保持原有视图创建和释放逻辑
-    dialect_name = engine.url.get_backend_name()
     await _create_views_if_needed(dialect_name)
 
     await engine.dispose()

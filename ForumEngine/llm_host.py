@@ -195,7 +195,7 @@ class ForumHost:
 - 指出关键转折点和重要节点
 
 **二、观点整合与对比分析**
-- 综合INSIGHT、MEDIA、QUERY三个Agent的视角和发现
+- 综合MARKET、CUSTOMER、COMPETE三个Agent的视角和发现
 - 指出不同数据源之间的共识与分歧
 - 分析每个Agent的信息价值和互补性
 - 如果发现事实错误或逻辑矛盾，请明确指出并给出理由
