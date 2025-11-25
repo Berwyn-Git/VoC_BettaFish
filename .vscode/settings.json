@@ -15,6 +15,12 @@
   // 禁用 Git 的自动文件排除（这可能是问题的根源）
   "files.useGitIgnore": false,
   
+  // Cursor AI 功能设置 - 允许访问 .env 文件
+  "cursor.ai.enabled": true,
+  "cursor.ai.fileAccess": {
+    ".env": true
+  },
+  
   // 搜索排除设置（不影响文件资源管理器的显示）
   "search.exclude": {
     "**/node_modules": true,
